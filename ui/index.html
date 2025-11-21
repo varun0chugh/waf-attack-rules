@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAFProbe - WAF Efficacy Scanner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#1a1a1a',
+                        primary: '#3b82f6',
+                        success: '#10b981',
+                        danger: '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white font-sans min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-primary mb-2">WAFProbe</h1>
+            <p class="text-gray-400">Automated WAF Efficacy Testing & Validation</p>
+        </header>
+
+        <div class="max-w-2xl mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
+            <div class="mb-6">
+                <label for="url" class="block text-sm font-medium text-gray-300 mb-2">Target URL</label>
+                <div class="flex gap-2">
+                    <input type="text" id="url" placeholder="http://example.com" 
+                        class="flex-1 bg-gray-700 border border-gray-600 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <button onclick="startScan()" 
+                        class="bg-primary hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-md transition duration-200">
+                        Run Audit
+                    </button>
+                </div>
+            </div>
+
+            <div id="status" class="hidden mb-6 text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                <p class="mt-2 text-gray-400">Scanning in progress...</p>
+            </div>
+
+            <div id="results" class="hidden">
+                <div class="flex items-center justify-between mb-6 p-4 bg-gray-700 rounded-lg">
+                    <div>
+                        <h2 class="text-xl font-bold">WAF Health Score</h2>
+                        <p class="text-sm text-gray-400">Based on blocked attacks</p>
+                    </div>
+                    <div class="text-4xl font-bold" id="score">0%</div>
+                </div>
+
+                <div class="space-y-4" id="details">
+                    <!-- Results will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scanId = null;
+
+        async function startScan() {
+            const url = document.getElementById('url').value;
+            if (!url) return alert('Please enter a URL');
+
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await response.json();
+                scanId = data.scan_id;
+                pollStatus();
+            } catch (e) {
+                alert('Error starting scan: ' + e);
+                document.getElementById('status').classList.add('hidden');
+            }
+        }
+
+        async function pollStatus() {
+            if (!scanId) return;
+
+            const response = await fetch(`/api/scan/${scanId}`);
+            const data = await response.json();
+
+            if (data.status === 'completed') {
+                document.getElementById('status').classList.add('hidden');
+                displayResults(data);
+            } else if (data.status === 'failed') {
+                document.getElementById('status').classList.add('hidden');
+                alert('Scan failed');
+            } else {
+                setTimeout(pollStatus, 1000);
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const scoreDiv = document.getElementById('score');
+            const detailsDiv = document.getElementById('details');
+
+            resultsDiv.classList.remove('hidden');
+            scoreDiv.innerText = `${data.score.toFixed(1)}%`;
+            scoreDiv.className = `text-4xl font-bold ${data.score >= 80 ? 'text-success' : data.score >= 50 ? 'text-yellow-500' : 'text-danger'}`;
+
+            detailsDiv.innerHTML = '';
+            data.results.forEach(res => {
+                const el = document.createElement('div');
+                el.className = 'bg-gray-700 p-4 rounded-md border-l-4 ' + (res.passed ? 'border-success' : 'border-danger');
+                el.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-white">${res.desc}</h3>
+                            <p class="text-xs text-gray-400">${res.category} | ID: ${res.test_id}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded text-xs font-bold ${res.passed ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                            ${res.passed ? 'BLOCKED' : 'BYPASSED'}
+                        </span>
+                    </div>
+                `;
+                detailsDiv.appendChild(el);
+            });
+        }
+    </script>
+</body>
+</html>

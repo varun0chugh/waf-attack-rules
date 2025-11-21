@@ -1,0 +1,77 @@
+meta:
+  author: "Antigravity"
+  description: "Unique Local File Inclusion (LFI) Bypass Attempts"
+  enabled: true
+  name: "930-lfi-unique-bypass"
+tests:
+  - test_id: 930100
+    desc: "LFI using UTF-8 overlong encoding for dot-dot-slash"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?file=%c0%ae%c0%ae%c0%afetc%c0%afpasswd"
+          output:
+            log_contains: "id \"930"
+  - test_id: 930101
+    desc: "LFI using null byte injection to bypass extension check"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?file=../../../../etc/passwd%00.jpg"
+          output:
+            log_contains: "id \"930"
+  - test_id: 930102
+    desc: "LFI using PHP filter wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "file=php://filter/convert.base64-encode/resource=index.php"
+          output:
+            log_contains: "id \"930"
+  - test_id: 930103
+    desc: "LFI using double URL encoding for path traversal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?file=%252e%252e%252fetc%252fpasswd"
+          output:
+            log_contains: "id \"930"
+  - test_id: 930104
+    desc: "LFI using Windows-style path separators"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?file=..\\..\\..\\windows\\win.ini"
+          output:
+            log_contains: "id \"930"

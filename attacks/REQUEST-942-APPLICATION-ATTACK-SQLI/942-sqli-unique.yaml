@@ -1,0 +1,92 @@
+meta:
+  author: "Antigravity"
+  description: "Unique SQL Injection Bypass Attempts and Variations"
+  enabled: true
+  name: "942-sqli-unique-bypass"
+tests:
+  - test_id: 942100
+    desc: "SQLi using JSON operator injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"user": "admin", "payload": {"@>": "SELECT * FROM users"}}'
+          output:
+            log_contains: "id \"942"
+  - test_id: 942101
+    desc: "SQLi using negation operator != instead of ="
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?id=1' OR '1'!='2"
+          output:
+            log_contains: "id \"942"
+  - test_id: 942102
+    desc: "SQLi using function synonyms (mid instead of substring)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=1 UNION SELECT mid(password,1,1) FROM users"
+          output:
+            log_contains: "id \"942"
+  - test_id: 942103
+    desc: "SQLi using vertical tab for whitespace obfuscation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=1%27UNION%0bSELECT%0b*%0bFROM%0busers--"
+          output:
+            log_contains: "id \"942"
+  - test_id: 942104
+    desc: "SQLi using scientific notation for numeric literals"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "id=1e1 OR 1=1"
+          output:
+            log_contains: "id \"942"
+  - test_id: 942105
+    desc: "SQLi using emoji in comment to break regex"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?id=1'/*🐼*/UNION/*🐼*/SELECT/*🐼*/1,2,3--"
+          output:
+            log_contains: "id \"942"

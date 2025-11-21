@@ -1,0 +1,35 @@
+meta:
+  author: "Antigravity"
+  description: "Server Side Request Forgery (SSRF) Attacks"
+  enabled: true
+  name: "912-ssrf-injection"
+tests:
+  - test_id: 912100
+    desc: "SSRF against AWS Metadata Service"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?url=http://169.254.169.254/latest/meta-data/"
+          output:
+            log_contains: "id \"912"
+  - test_id: 912101
+    desc: "SSRF against Localhost with Port"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"webhook": "http://127.0.0.1:22"}'
+          output:
+            log_contains: "id \"912"

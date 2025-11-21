@@ -1,0 +1,50 @@
+meta:
+  author: "Antigravity"
+  description: "PHP Injection and Shellshock Attacks"
+  enabled: true
+  name: "933-php-shellshock"
+tests:
+  - test_id: 933100
+    desc: "Shellshock Vulnerability (User-Agent)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "() { :; }; echo; echo 'vulnerable'"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "id \"933"
+  - test_id: 933101
+    desc: "PHP Object Injection via Cookie"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Cookie: "user_data=O:8:\"stdClass\":1:{s:5:\"admin\";b:1;}"
+            uri: "/"
+          output:
+            log_contains: "id \"933"
+  - test_id: 933102
+    desc: "PHP Wrapper input:// usage"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "file=php://input&cmd=id"
+          output:
+            log_contains: "id \"933"
