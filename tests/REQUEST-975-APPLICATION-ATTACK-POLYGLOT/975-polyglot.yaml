@@ -1,0 +1,64 @@
+meta:
+  author: "Antigravity"
+  description: "Polyglot Payload Tests"
+  enabled: true
+  name: "975-polyglot-payloads"
+tests:
+  - test_id: 975100
+    desc: "Polyglot: XSS + SQLi + Command Injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?q='><script>alert(1)</script>|cat /etc/passwd"
+          output:
+            log_contains: "id \"975"
+  - test_id: 975101
+    desc: "Polyglot: Multi-Context XSS"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "input=jaVasCript:/*-/*`/*\\`/*'/*\"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/</scRipt/--!>\\x3csVg/<sVg/oNloAd=alert()//"
+          output:
+            log_contains: "id \"975"
+  - test_id: 975102
+    desc: "Polyglot: XSS + Template Injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?name={{7*7}}<script>alert(1)</script>"
+          output:
+            log_contains: "id \"975"
+  - test_id: 975103
+    desc: "Polyglot: JSON + HTML + JS"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"user\": \"</script><script>alert(document.domain)</script>\"}"
+          output:
+            log_contains: "id \"975"

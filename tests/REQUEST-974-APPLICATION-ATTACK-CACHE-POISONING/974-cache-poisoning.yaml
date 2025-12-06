@@ -1,0 +1,66 @@
+meta:
+  author: "Antigravity"
+  description: "Web Cache Poisoning Tests"
+  enabled: true
+  name: "974-cache-poisoning"
+tests:
+  - test_id: 974100
+    desc: "Cache Poisoning: X-Forwarded-Host"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Forwarded-Host: "evil.com"
+            uri: "/"
+          output:
+            log_contains: "id \"974"
+  - test_id: 974101
+    desc: "Cache Poisoning: X-Original-URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Original-URL: "/admin"
+            uri: "/"
+          output:
+            log_contains: "id \"974"
+  - test_id: 974102
+    desc: "Cache Poisoning: X-Rewrite-URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Rewrite-URL: "/api/admin"
+            uri: "/public"
+          output:
+            log_contains: "id \"974"
+  - test_id: 974103
+    desc: "Cache Poisoning: X-Forwarded-Scheme"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Forwarded-Scheme: "nothttps"
+            uri: "/"
+          output:
+            log_contains: "id \"974"

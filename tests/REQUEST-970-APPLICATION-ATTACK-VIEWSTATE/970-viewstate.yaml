@@ -1,0 +1,51 @@
+meta:
+  author: "Antigravity"
+  description: "ASP.NET ViewState Attack Tests"
+  enabled: true
+  name: "970-viewstate-attacks"
+tests:
+  - test_id: 970100
+    desc: "ViewState: Tampered __VIEWSTATE"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "__VIEWSTATE=/wEPDwUJODExMDE5NzY5ZGQC&__EVENTVALIDATION=tampered"
+          output:
+            log_contains: "id \"970"
+  - test_id: 970101
+    desc: "ViewState: Deserialization Gadget"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "__VIEWSTATE=/wEPDwUJNzk3MTg5NjY5D2QWAgIDD2QWAgIBDxYCHgRUZXh0BQlIZWxsbyBXb3JsZGRkZGRk&cmd=calc"
+          output:
+            log_contains: "id \"970"
+  - test_id: 970102
+    desc: "ViewState: MAC Validation Bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "__VIEWSTATE=maliciousbase64&__VIEWSTATEGENERATOR=CA0B0334"
+          output:
+            log_contains: "id \"970"

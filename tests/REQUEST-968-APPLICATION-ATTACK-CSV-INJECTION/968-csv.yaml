@@ -1,0 +1,65 @@
+meta:
+  author: "Antigravity"
+  description: "CSV Injection (Formula Injection) Tests"
+  enabled: true
+  name: "968-csv-injection"
+tests:
+  - test_id: 968100
+    desc: "CSV Injection: Equals Formula"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "email==cmd|'/c calc'!A1&name=attacker"
+          output:
+            log_contains: "id \"968"
+  - test_id: 968101
+    desc: "CSV Injection: Plus Formula"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"comment\": \"+1+1+cmd|'/c calc'!A1\"}"
+          output:
+            log_contains: "id \"968"
+  - test_id: 968102
+    desc: "CSV Injection: Minus Formula"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?feedback=-2+3+cmd|'/c calc'!A1"
+          output:
+            log_contains: "id \"968"
+  - test_id: 968103
+    desc: "CSV Injection: @ Symbol Formula"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "description=@SUM(1+1)*cmd|'/c calc'!A1"
+          output:
+            log_contains: "id \"968"

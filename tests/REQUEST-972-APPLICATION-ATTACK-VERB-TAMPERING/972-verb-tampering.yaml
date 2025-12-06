@@ -1,0 +1,66 @@
+meta:
+  author: "Antigravity"
+  description: "HTTP Verb Tampering Tests"
+  enabled: true
+  name: "972-verb-tampering"
+tests:
+  - test_id: 972100
+    desc: "HTTP Verb Tampering: X-HTTP-Method-Override"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-HTTP-Method-Override: "DELETE"
+            uri: "/api/users/1"
+          output:
+            log_contains: "id \"972"
+  - test_id: 972101
+    desc: "HTTP Verb Tampering: X-HTTP-Method"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-HTTP-Method: "PUT"
+              Content-Type: "application/json"
+            data: "{\"role\": \"admin\"}"
+          output:
+            log_contains: "id \"972"
+  - test_id: 972102
+    desc: "HTTP Verb Tampering: X-Method-Override"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Method-Override: "PATCH"
+            uri: "/api/settings"
+          output:
+            log_contains: "id \"972"
+  - test_id: 972103
+    desc: "HTTP Verb Tampering: Arbitrary Method"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "HACK"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "id \"972"

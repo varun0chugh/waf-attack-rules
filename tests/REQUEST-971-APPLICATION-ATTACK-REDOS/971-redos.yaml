@@ -1,0 +1,49 @@
+meta:
+  author: "Antigravity"
+  description: "ReDoS (Regular Expression DoS) Tests"
+  enabled: true
+  name: "971-redos"
+tests:
+  - test_id: 971100
+    desc: "ReDoS: Catastrophic Backtracking (a+)+"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?search=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
+          output:
+            log_contains: "id \"971"
+  - test_id: 971101
+    desc: "ReDoS: Email Regex Abuse"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "email=aaaaaaaaaaaaaaaaaaaaaaaaaaa@aaaaaaaaaaaaaaaaaaaaaaaa"
+          output:
+            log_contains: "id \"971"
+  - test_id: 971102
+    desc: "ReDoS: Nested Quantifiers"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?input=(x+x+)+y"
+          output:
+            log_contains: "id \"971"

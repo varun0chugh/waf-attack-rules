@@ -1,0 +1,76 @@
+meta:
+  author: "Antigravity"
+  description: "Open Redirect Tests"
+  enabled: true
+  name: "966-open-redirect"
+tests:
+  - test_id: 966100
+    desc: "Open Redirect: Basic URL Parameter"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?redirect=http://evil.com"
+          output:
+            log_contains: "id \"966"
+  - test_id: 966101
+    desc: "Open Redirect: Protocol-Relative URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?next=//attacker.com/phishing"
+          output:
+            log_contains: "id \"966"
+  - test_id: 966102
+    desc: "Open Redirect: Data URI"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?url=data:text/html,<script>alert(1)</script>"
+          output:
+            log_contains: "id \"966"
+  - test_id: 966103
+    desc: "Open Redirect: JavaScript Protocol"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?return=javascript:alert(document.domain)"
+          output:
+            log_contains: "id \"966"
+  - test_id: 966104
+    desc: "Open Redirect: @ Symbol Abuse"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?goto=https://trusted.com@evil.com"
+          output:
+            log_contains: "id \"966"

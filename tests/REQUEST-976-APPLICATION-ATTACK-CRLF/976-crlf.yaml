@@ -1,0 +1,63 @@
+meta:
+  author: "Antigravity"
+  description: "CRLF Injection Tests"
+  enabled: true
+  name: "976-crlf-injection"
+tests:
+  - test_id: 976100
+    desc: "CRLF Injection: Response Splitting"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?redirect=/%0d%0aSet-Cookie:%20session=malicious"
+          output:
+            log_contains: "id \"976"
+  - test_id: 976101
+    desc: "CRLF Injection: Custom Header Injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Custom: "value\r\nX-Injected: malicious"
+            uri: "/"
+          output:
+            log_contains: "id \"976"
+  - test_id: 976102
+    desc: "CRLF Injection: Location Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?url=http://example.com%0d%0aContent-Length:%200%0d%0a%0d%0aHTTP/1.1%20200%20OK"
+          output:
+            log_contains: "id \"976"
+  - test_id: 976103
+    desc: "CRLF Injection: Double Encoded"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?next=/%250d%250aSet-Cookie:%20admin=true"
+          output:
+            log_contains: "id \"976"
