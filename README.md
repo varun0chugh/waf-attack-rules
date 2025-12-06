@@ -19,7 +19,7 @@ The tests use the [FTW (Framework for Testing WAFs)](https://github.com/corerule
 
 ```yaml
 meta:
-  author: "Antigravity"
+  author: "Chugh"
   description: "Unique SQL Injection Bypass Attempt"
   enabled: true
   name: "942-sqli-unique-bypass"
