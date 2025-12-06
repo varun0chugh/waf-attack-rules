@@ -1,0 +1,81 @@
+meta:
+  author: "Antigravity"
+  description: "Web Shell Signature Tests"
+  enabled: true
+  name: "953-webshell-detection"
+tests:
+  - test_id: 953100
+    desc: "Web Shell: c99.php Signature"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "code=c99sh_eval"
+          output:
+            log_contains: "id \"953"
+  - test_id: 953101
+    desc: "Web Shell: r57.php Signature"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "cmd=r57_shell"
+          output:
+            log_contains: "id \"953"
+  - test_id: 953102
+    desc: "Web Shell: China Chopper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "password=eval($_POST[z0])&z0=phpinfo();"
+          output:
+            log_contains: "id \"953"
+  - test_id: 953103
+    desc: "Web Shell: WSO (Web Shell by Orb)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "pass=wso2.5"
+          output:
+            log_contains: "id \"953"
+  - test_id: 953104
+    desc: "Web Shell: Obfuscated PHP One-Liner"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "c=$x=str_replace('y','','sysyytem');$x('ls');"
+          output:
+            log_contains: "id \"953"

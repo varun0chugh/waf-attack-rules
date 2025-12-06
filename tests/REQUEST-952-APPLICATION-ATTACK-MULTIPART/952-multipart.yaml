@@ -1,0 +1,66 @@
+meta:
+  author: "Antigravity"
+  description: "Multipart Evasion Tests"
+  enabled: true
+  name: "952-multipart-evasion"
+tests:
+  - test_id: 952100
+    desc: "Multipart: Multiple Boundaries"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=boundary1; boundary=boundary2"
+            data: "--boundary2\r\nContent-Disposition: form-data; name=\"param\"\r\n\r\nmalicious\r\n--boundary2--"
+          output:
+            log_contains: "id \"952"
+  - test_id: 952101
+    desc: "Multipart: Case Insensitive Boundary"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; BoUnDaRy=---------------------------12345"
+            data: "-----------------------------12345\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php\"\r\n\r\n<?php system('id'); ?>\r\n-----------------------------12345--"
+          output:
+            log_contains: "id \"952"
+  - test_id: 952102
+    desc: "Multipart: Premature Boundary Termination"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=boundary"
+            data: "--boundary\r\nContent-Disposition: form-data; name=\"id\"\r\n\r\n1' OR '1'='1\r\n--boundary-"
+          output:
+            log_contains: "id \"952"
+  - test_id: 952103
+    desc: "Multipart: Double Content-Disposition"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=boundary"
+            data: "--boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"safe.txt\"\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php\"\r\n\r\n<?php phpinfo(); ?>\r\n--boundary--"
+          output:
+            log_contains: "id \"952"

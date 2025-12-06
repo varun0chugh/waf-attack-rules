@@ -1,0 +1,64 @@
+meta:
+  author: "Antigravity"
+  description: "LDAP Injection Tests"
+  enabled: true
+  name: "951-ldap-injection"
+tests:
+  - test_id: 951100
+    desc: "LDAP Injection: Basic Bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "user=*&password=*"
+          output:
+            log_contains: "id \"951"
+  - test_id: 951101
+    desc: "LDAP Injection: Null Byte"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?user=admin%00"
+          output:
+            log_contains: "id \"951"
+  - test_id: 951102
+    desc: "LDAP Injection: Attribute Extraction"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "user=*)(uid=*))(|(uid=*"
+          output:
+            log_contains: "id \"951"
+  - test_id: 951103
+    desc: "LDAP Injection: Blind Boolean"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?search=admin)(|(password=*a*))"
+          output:
+            log_contains: "id \"951"

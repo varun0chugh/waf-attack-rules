@@ -1,0 +1,77 @@
+meta:
+  author: "Antigravity"
+  description: "Server-Side Template Injection (SSTI) Tests"
+  enabled: true
+  name: "950-ssti"
+tests:
+  - test_id: 950100
+    desc: "SSTI: Jinja2 (Python) Basic"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?name={{7*7}}"
+          output:
+            log_contains: "id \"950"
+  - test_id: 950101
+    desc: "SSTI: Jinja2 (Python) RCE"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "template={{''.__class__.__mro__[2].__subclasses__()[40]('/etc/passwd').read()}}"
+          output:
+            log_contains: "id \"950"
+  - test_id: 950102
+    desc: "SSTI: ERB (Ruby)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?q=<%= 7*7 %>"
+          output:
+            log_contains: "id \"950"
+  - test_id: 950103
+    desc: "SSTI: Smarty (PHP)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?user={$smarty.version}"
+          output:
+            log_contains: "id \"950"
+  - test_id: 950104
+    desc: "SSTI: Velocity (Java)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?name=#set($x=7*7)$x"
+          output:
+            log_contains: "id \"950"
