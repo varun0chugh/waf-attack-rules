@@ -1,0 +1,79 @@
+meta:
+  author: "Antigravity"
+  description: "Unique Remote Code Execution (RCE) Bypass Attempts"
+  enabled: true
+  name: "932-rce-unique-bypass"
+tests:
+  - test_id: 932100
+    desc: "RCE via Spring Expression Language (SpEL) Injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "input=${T(java.lang.Runtime).getRuntime().exec('id')}"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932101
+    desc: "RCE via PHP function call obfuscation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?cmd=return\"system\"(ls);"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932102
+    desc: "RCE via Base64 encoded command piped to shell"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "cmd=echo Y2F0IC9ldGMvcGFzc3dk | base64 -d | sh"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932103
+    desc: "RCE using wildcards to bypass specific command blocks"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?cmd=/bin/c?? /etc/p?ss??"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932104
+    desc: "RCE via OGNL injection (Struts2 style)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "redirect:${%23a%3d(new%20java.lang.ProcessBuilder(new%20java.lang.String[]{'id'})).start()}"
+          output:
+            log_contains: "id \"932"

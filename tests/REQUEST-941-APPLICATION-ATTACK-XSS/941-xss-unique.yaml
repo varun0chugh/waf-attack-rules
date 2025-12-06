@@ -1,0 +1,92 @@
+meta:
+  author: "Antigravity"
+  description: "Unique Cross-Site Scripting (XSS) Bypass Attempts"
+  enabled: true
+  name: "941-xss-unique-bypass"
+tests:
+  - test_id: 941100
+    desc: "XSS via HTTP Parameter Pollution (HPP)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=1'&q=alert(1)&q='2"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941101
+    desc: "XSS using obscure tag and event handler"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "comment=<details/open/ontoggle=confirm(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941102
+    desc: "XSS using double URL encoding"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?search=%253Cscript%253Ealert(1)%253C%252Fscript%253E"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941103
+    desc: "XSS using SVG animate tag"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=<svg><animate onbegin=alert(1) attributeName=x dur=1s>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941104
+    desc: "XSS using JavaScript pseudo-protocol with whitespace obfuscation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?url=java%09script:alert(1)"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941105
+    desc: "XSS using nested tags to confuse parser"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "input=<<script>alert(1)//<</script>"
+          output:
+            log_contains: "id \"941"

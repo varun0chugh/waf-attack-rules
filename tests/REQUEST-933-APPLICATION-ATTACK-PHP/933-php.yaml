@@ -1,0 +1,92 @@
+meta:
+  author: "Antigravity"
+  description: "PHP Injection Tests"
+  enabled: true
+  name: "933-php-injection"
+tests:
+  - test_id: 933100
+    desc: "PHP Wrapper: php://input"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=php://input"
+            data: "<?php system('id'); ?>"
+          output:
+            log_contains: "id \"933"
+  - test_id: 933101
+    desc: "PHP Wrapper: php://filter"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=php://filter/convert.base64-encode/resource=index.php"
+          output:
+            log_contains: "id \"933"
+  - test_id: 933102
+    desc: "PHP Wrapper: data://"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7ID8+"
+          output:
+            log_contains: "id \"933"
+  - test_id: 933103
+    desc: "PHP Wrapper: expect://"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?cmd=expect://id"
+          output:
+            log_contains: "id \"933"
+  - test_id: 933104
+    desc: "PHP Function: system()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?exec=system('ls')"
+          output:
+            log_contains: "id \"933"
+  - test_id: 933105
+    desc: "PHP Function: passthru()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "code=passthru('whoami')"
+          output:
+            log_contains: "id \"933"

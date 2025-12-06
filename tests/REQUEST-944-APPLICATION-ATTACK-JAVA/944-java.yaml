@@ -1,0 +1,64 @@
+meta:
+  author: "Antigravity"
+  description: "Java Injection Tests"
+  enabled: true
+  name: "944-java-injection"
+tests:
+  - test_id: 944100
+    desc: "Java Deserialization: Magic Bytes (AC ED 00 05)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/octet-stream"
+            data: "\xac\xed\x00\x05sr\x00\x1d"
+          output:
+            log_contains: "id \"944"
+  - test_id: 944101
+    desc: "Java EL Injection: ${...}"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?expr=${7*7}"
+          output:
+            log_contains: "id \"944"
+  - test_id: 944102
+    desc: "Java EL Injection: #{...}"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "name=#{request.contextPath}"
+          output:
+            log_contains: "id \"944"
+  - test_id: 944103
+    desc: "Java ClassLoader Manipulation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?class.classLoader.resources.context.parent.pipeline.first.pattern=%25%7Bprefix%7Di"
+          output:
+            log_contains: "id \"944"

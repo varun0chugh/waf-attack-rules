@@ -1,0 +1,67 @@
+meta:
+  author: "Antigravity"
+  description: "Protocol Attack Tests"
+  enabled: true
+  name: "921-protocol-attack"
+tests:
+  - test_id: 921100
+    desc: "HTTP Request Smuggling: CL.TE"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Length: "6"
+              Transfer-Encoding: "chunked"
+            data: "0\r\n\r\nG"
+          output:
+            log_contains: "id \"921"
+  - test_id: 921101
+    desc: "HTTP Request Smuggling: TE.CL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Length: "4"
+              Transfer-Encoding: "chunked"
+            data: "12\r\nGPOST / HTTP/1.1\r\n\r\n"
+          output:
+            log_contains: "id \"921"
+  - test_id: 921102
+    desc: "HTTP Response Splitting via Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Custom-Header: "val\r\nSet-Cookie: session=bad"
+            uri: "/"
+          output:
+            log_contains: "id \"921"
+  - test_id: 921103
+    desc: "HTTP Response Splitting via Parameter"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?lang=en%0d%0aSet-Cookie:%20session=hacked"
+          output:
+            log_contains: "id \"921"

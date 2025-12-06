@@ -1,0 +1,81 @@
+meta:
+  author: "Antigravity"
+  description: "GraphQL Injection Tests"
+  enabled: true
+  name: "946-graphql-injection"
+tests:
+  - test_id: 946100
+    desc: "GraphQL Introspection Query"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"query\": \"{ __schema { types { name } } }\"}"
+          output:
+            log_contains: "id \"946"
+  - test_id: 946101
+    desc: "GraphQL Batching Attack (DoS)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "[{\"query\": \"{ user(id: 1) { name } }\"}, {\"query\": \"{ user(id: 2) { name } }\"}, {\"query\": \"{ user(id: 3) { name } }\"}]"
+          output:
+            log_contains: "id \"946"
+  - test_id: 946102
+    desc: "GraphQL Deeply Nested Query (DoS)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"query\": \"{ user { friends { friends { friends { friends { name } } } } } }\"}"
+          output:
+            log_contains: "id \"946"
+  - test_id: 946103
+    desc: "GraphQL Alias Overloading"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"query\": \"{ u1: user(id:1){name}, u2: user(id:2){name}, u3: user(id:3){name} }\"}"
+          output:
+            log_contains: "id \"946"
+  - test_id: 946104
+    desc: "GraphQL Directive Overloading"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"query\": \"query { __typename @aa@aa@aa@aa@aa@aa@aa@aa@aa@aa }\"}"
+          output:
+            log_contains: "id \"946"

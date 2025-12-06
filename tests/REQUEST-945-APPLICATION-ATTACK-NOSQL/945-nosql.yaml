@@ -1,0 +1,80 @@
+meta:
+  author: "Antigravity"
+  description: "NoSQL Injection Tests"
+  enabled: true
+  name: "945-nosql-injection"
+tests:
+  - test_id: 945100
+    desc: "MongoDB Injection: $ne (Not Equals)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"username\": {\"$ne\": null}, \"password\": {\"$ne\": null}}"
+          output:
+            log_contains: "id \"945"
+  - test_id: 945101
+    desc: "MongoDB Injection: $gt (Greater Than)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"price\": {\"$gt\": 0}}"
+          output:
+            log_contains: "id \"945"
+  - test_id: 945102
+    desc: "MongoDB Injection: $where (JavaScript Execution)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"$where\": \"sleep(5000)\"}"
+          output:
+            log_contains: "id \"945"
+  - test_id: 945103
+    desc: "MongoDB Injection: $regex (Regular Expression)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"username\": {\"$regex\": \"^admin.*\"}}"
+          output:
+            log_contains: "id \"945"
+  - test_id: 945104
+    desc: "Redis Injection: FLUSHALL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?q=%0d%0aFLUSHALL%0d%0a"
+          output:
+            log_contains: "id \"945"

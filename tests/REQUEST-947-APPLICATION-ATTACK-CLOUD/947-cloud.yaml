@@ -1,0 +1,94 @@
+meta:
+  author: "Antigravity"
+  description: "Cloud/SSRF Tests"
+  enabled: true
+  name: "947-cloud-ssrf"
+tests:
+  - test_id: 947100
+    desc: "AWS Metadata Service (IMDSv1)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?url=http://169.254.169.254/latest/meta-data/"
+          output:
+            log_contains: "id \"947"
+  - test_id: 947101
+    desc: "AWS Metadata Service (IMDSv2 - Token Header)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "PUT"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-aws-ec2-metadata-token-ttl-seconds: "21600"
+            uri: "/?url=http://169.254.169.254/latest/api/token"
+          output:
+            log_contains: "id \"947"
+  - test_id: 947102
+    desc: "GCP Metadata Service"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Metadata-Flavor: "Google"
+            uri: "/?url=http://metadata.google.internal/computeMetadata/v1/"
+          output:
+            log_contains: "id \"947"
+  - test_id: 947103
+    desc: "Azure Metadata Service"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Metadata: "true"
+            uri: "/?url=http://169.254.169.254/metadata/instance?api-version=2021-02-01"
+          output:
+            log_contains: "id \"947"
+  - test_id: 947104
+    desc: "Oracle Cloud Metadata Service"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Authorization: "Bearer Oracle"
+            uri: "/?url=http://169.254.169.254/opc/v1/instance/"
+          output:
+            log_contains: "id \"947"
+  - test_id: 947105
+    desc: "Kubernetes Service Account Token"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=/var/run/secrets/kubernetes.io/serviceaccount/token"
+          output:
+            log_contains: "id \"947"

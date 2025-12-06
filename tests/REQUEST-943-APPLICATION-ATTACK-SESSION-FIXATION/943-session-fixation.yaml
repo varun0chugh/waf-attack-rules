@@ -1,0 +1,63 @@
+meta:
+  author: "Antigravity"
+  description: "Session Fixation Tests"
+  enabled: true
+  name: "943-session-fixation"
+tests:
+  - test_id: 943100
+    desc: "Session Fixation: Session ID in URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?JSESSIONID=1234567890"
+          output:
+            log_contains: "id \"943"
+  - test_id: 943101
+    desc: "Session Fixation: PHPSESSID in URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?PHPSESSID=abcdef123456"
+          output:
+            log_contains: "id \"943"
+  - test_id: 943102
+    desc: "Session Fixation: ASP.NET_SessionId in URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?ASP.NET_SessionId=xyz987654321"
+          output:
+            log_contains: "id \"943"
+  - test_id: 943103
+    desc: "Session Fixation: Setting Cookie via Meta Tag"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "text/html"
+            data: "<meta http-equiv=Set-Cookie content=\"session=fixed\">"
+          output:
+            log_contains: "id \"943"

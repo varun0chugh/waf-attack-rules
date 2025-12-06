@@ -1,0 +1,79 @@
+meta:
+  author: "Antigravity"
+  description: "Protocol Enforcement Tests"
+  enabled: true
+  name: "920-protocol-enforcement"
+tests:
+  - test_id: 920100
+    desc: "Invalid HTTP Version"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/"
+            version: "HTTP/3.0"
+          output:
+            log_contains: "id \"920"
+  - test_id: 920101
+    desc: "Missing Host Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+            uri: "/"
+          output:
+            log_contains: "id \"920"
+  - test_id: 920102
+    desc: "Empty Host Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: ""
+            uri: "/"
+          output:
+            log_contains: "id \"920"
+  - test_id: 920103
+    desc: "Content-Length Header with GET request"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Length: "5"
+            uri: "/"
+          output:
+            log_contains: "id \"920"
+  - test_id: 920104
+    desc: "Invalid Content-Type Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "text/plain; charset=invalid-charset"
+              Content-Length: "4"
+            data: "test"
+          output:
+            log_contains: "id \"920"
