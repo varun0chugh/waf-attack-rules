@@ -1,0 +1,51 @@
+meta:
+  author: "Antigravity"
+  description: "Cross-Site Request Forgery (CSRF) Tests"
+  enabled: true
+  name: "959-csrf"
+tests:
+  - test_id: 959100
+    desc: "CSRF: Missing Token"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "email=attacker@evil.com&action=change_email"
+          output:
+            log_contains: "id \"959"
+  - test_id: 959101
+    desc: "CSRF: GET-based State Change"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?action=delete&id=123"
+          output:
+            log_contains: "id \"959"
+  - test_id: 959102
+    desc: "CSRF: JSON Without CORS Check"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+              Origin: "http://evil.com"
+            data: "{\"action\": \"transfer\", \"amount\": 1000}"
+          output:
+            log_contains: "id \"959"

@@ -1,0 +1,52 @@
+meta:
+  author: "Antigravity"
+  description: "CORS Bypass Tests"
+  enabled: true
+  name: "962-cors-bypass"
+tests:
+  - test_id: 962100
+    desc: "CORS: Null Origin"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Origin: "null"
+            uri: "/api/sensitive"
+          output:
+            log_contains: "id \"962"
+  - test_id: 962101
+    desc: "CORS: Trusted Subdomain Bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "OPTIONS"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Origin: "http://evil.trusted-domain.com"
+              Access-Control-Request-Method: "POST"
+            uri: "/api/data"
+          output:
+            log_contains: "id \"962"
+  - test_id: 962102
+    desc: "CORS: Arbitrary Origin Reflection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Origin: "http://attacker.com"
+            uri: "/api/user"
+          output:
+            log_contains: "id \"962"

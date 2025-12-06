@@ -1,0 +1,63 @@
+meta:
+  author: "Antigravity"
+  description: "Server-Side Request Forgery (SSRF) Tests"
+  enabled: true
+  name: "958-ssrf"
+tests:
+  - test_id: 958100
+    desc: "SSRF: Internal IP"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?url=http://192.168.1.1/admin"
+          output:
+            log_contains: "id \"958"
+  - test_id: 958101
+    desc: "SSRF: Localhost"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"webhookUrl\": \"http://localhost:8080/internal\"}"
+          output:
+            log_contains: "id \"958"
+  - test_id: 958102
+    desc: "SSRF: 127.0.0.1"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?fetch=http://127.0.0.1:22"
+          output:
+            log_contains: "id \"958"
+  - test_id: 958103
+    desc: "SSRF: file:// Protocol"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?url=file:///etc/passwd"
+          output:
+            log_contains: "id \"958"

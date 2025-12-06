@@ -1,0 +1,49 @@
+meta:
+  author: "Antigravity"
+  description: "Server-Side Includes (SSI) Injection Tests"
+  enabled: true
+  name: "957-ssi-injection"
+tests:
+  - test_id: 957100
+    desc: "SSI Injection: exec cmd"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?page=<!--#exec cmd=\"ls\" -->"
+          output:
+            log_contains: "id \"957"
+  - test_id: 957101
+    desc: "SSI Injection: include virtual"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "comment=<!--#include virtual=\"/etc/passwd\" -->"
+          output:
+            log_contains: "id \"957"
+  - test_id: 957102
+    desc: "SSI Injection: echo var"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?name=<!--#echo var=\"DOCUMENT_NAME\" -->"
+          output:
+            log_contains: "id \"957"

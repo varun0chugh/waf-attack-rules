@@ -1,0 +1,65 @@
+meta:
+  author: "Antigravity"
+  description: "Shellshock (CVE-2014-6271) Tests"
+  enabled: true
+  name: "954-shellshock"
+tests:
+  - test_id: 954100
+    desc: "Shellshock: Basic User-Agent"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "() { :; }; echo; echo vulnerable"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "id \"954"
+  - test_id: 954101
+    desc: "Shellshock: Referer Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Referer: "() { :;}; /bin/bash -c 'cat /etc/passwd'"
+            uri: "/"
+          output:
+            log_contains: "id \"954"
+  - test_id: 954102
+    desc: "Shellshock: Cookie Header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Cookie: "test=() { :; }; echo vulnerable"
+            uri: "/"
+          output:
+            log_contains: "id \"954"
+  - test_id: 954103
+    desc: "Shellshock: CGI Environment Variable"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Forwarded-For: "() { :; }; /usr/bin/id"
+            uri: "/cgi-bin/test.cgi"
+          output:
+            log_contains: "id \"954"

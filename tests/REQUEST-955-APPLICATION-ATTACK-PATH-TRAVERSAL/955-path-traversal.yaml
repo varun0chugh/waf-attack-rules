@@ -1,0 +1,76 @@
+meta:
+  author: "Antigravity"
+  description: "Path Traversal Tests"
+  enabled: true
+  name: "955-path-traversal"
+tests:
+  - test_id: 955100
+    desc: "Path Traversal: Basic ../"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/../../../etc/passwd"
+          output:
+            log_contains: "id \"955"
+  - test_id: 955101
+    desc: "Path Traversal: URL Encoded"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/%2e%2e/%2e%2e/%2e%2e/etc/passwd"
+          output:
+            log_contains: "id \"955"
+  - test_id: 955102
+    desc: "Path Traversal: Double URL Encoded"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/%252e%252e/%252e%252e/etc/passwd"
+          output:
+            log_contains: "id \"955"
+  - test_id: 955103
+    desc: "Path Traversal: Nested Sequences"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/....//....//....//etc/passwd"
+          output:
+            log_contains: "id \"955"
+  - test_id: 955104
+    desc: "Path Traversal: Absolute Path"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=/etc/shadow"
+          output:
+            log_contains: "id \"955"

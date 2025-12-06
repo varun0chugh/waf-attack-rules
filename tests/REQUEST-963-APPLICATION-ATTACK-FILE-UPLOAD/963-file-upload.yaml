@@ -1,0 +1,66 @@
+meta:
+  author: "Antigravity"
+  description: "File Upload Bypass Tests"
+  enabled: true
+  name: "963-file-upload-bypass"
+tests:
+  - test_id: 963100
+    desc: "File Upload: Double Extension"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=----WebKitFormBoundary"
+            data: "------WebKitFormBoundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php.jpg\"\r\n\r\n<?php system($_GET['cmd']); ?>\r\n------WebKitFormBoundary--"
+          output:
+            log_contains: "id \"963"
+  - test_id: 963101
+    desc: "File Upload: Null Byte"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=----WebKitFormBoundary"
+            data: "------WebKitFormBoundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php%00.jpg\"\r\n\r\n<?php phpinfo(); ?>\r\n------WebKitFormBoundary--"
+          output:
+            log_contains: "id \"963"
+  - test_id: 963102
+    desc: "File Upload: MIME Type Mismatch"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=----WebKitFormBoundary"
+            data: "------WebKitFormBoundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php\"\r\nContent-Type: image/jpeg\r\n\r\n<?php system('id'); ?>\r\n------WebKitFormBoundary--"
+          output:
+            log_contains: "id \"963"
+  - test_id: 963103
+    desc: "File Upload: Case Variation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=----WebKitFormBoundary"
+            data: "------WebKitFormBoundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.PHP\"\r\n\r\n<?php passthru($_GET['c']); ?>\r\n------WebKitFormBoundary--"
+          output:
+            log_contains: "id \"963"

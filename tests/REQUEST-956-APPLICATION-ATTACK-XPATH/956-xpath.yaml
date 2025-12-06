@@ -1,0 +1,49 @@
+meta:
+  author: "Antigravity"
+  description: "XPath Injection Tests"
+  enabled: true
+  name: "956-xpath-injection"
+tests:
+  - test_id: 956100
+    desc: "XPath Injection: Basic OR Bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "user=' or '1'='1&pass=' or '1'='1"
+          output:
+            log_contains: "id \"956"
+  - test_id: 956101
+    desc: "XPath Injection: Boolean Blind"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?user=admin' and substring(password,1,1)='a"
+          output:
+            log_contains: "id \"956"
+  - test_id: 956102
+    desc: "XPath Injection: count() Function"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?search=' or count(parent::*)=1 or 'a'='b"
+          output:
+            log_contains: "id \"956"

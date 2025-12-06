@@ -1,0 +1,63 @@
+meta:
+  author: "Antigravity"
+  description: "Unicode/Encoding Bypass Tests"
+  enabled: true
+  name: "965-unicode-bypass"
+tests:
+  - test_id: 965100
+    desc: "Unicode: Fullwidth Characters"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?q=＜script＞alert(1)＜/script＞"
+          output:
+            log_contains: "id \"965"
+  - test_id: 965101
+    desc: "Unicode: Overlong UTF-8"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "cmd=%c0%af%c0%aeetc%c0%afpasswd"
+          output:
+            log_contains: "id \"965"
+  - test_id: 965102
+    desc: "Unicode: Normalization (NFKC)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=ﬁle:///etc/passwd"
+          output:
+            log_contains: "id \"965"
+  - test_id: 965103
+    desc: "Unicode: Homograph Attack"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?redirect=http://аpple.com"
+          output:
+            log_contains: "id \"965"

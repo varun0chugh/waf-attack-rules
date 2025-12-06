@@ -1,0 +1,49 @@
+meta:
+  author: "Antigravity"
+  description: "HTTP Parameter Pollution (HPP) Tests"
+  enabled: true
+  name: "960-hpp"
+tests:
+  - test_id: 960100
+    desc: "HPP: Duplicate Parameters"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?id=1&id=2"
+          output:
+            log_contains: "id \"960"
+  - test_id: 960101
+    desc: "HPP: Array Notation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "user[]=admin&user[]=attacker"
+          output:
+            log_contains: "id \"960"
+  - test_id: 960102
+    desc: "HPP: Conflicting Values"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?role=user&role=admin"
+          output:
+            log_contains: "id \"960"

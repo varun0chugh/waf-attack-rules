@@ -1,0 +1,52 @@
+meta:
+  author: "Antigravity"
+  description: "JWT (JSON Web Token) Attack Tests"
+  enabled: true
+  name: "961-jwt-attacks"
+tests:
+  - test_id: 961100
+    desc: "JWT: None Algorithm"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Authorization: "Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTUxNjIzOTAyMn0."
+            uri: "/"
+          output:
+            log_contains: "id \"961"
+  - test_id: 961101
+    desc: "JWT: Algorithm Confusion (RS256 to HS256)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiJ9.signature"
+              Content-Type: "application/json"
+            data: "{}"
+          output:
+            log_contains: "id \"961"
+  - test_id: 961102
+    desc: "JWT: Kid Header Injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Authorization: "Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6Ii4uLy4uLy4uL3B1YmxpYy9zaGVsbC5waHAifQ.payload.signature"
+            uri: "/"
+          output:
+            log_contains: "id \"961"

