@@ -1,8 +1,8 @@
 meta:
   author: "Antigravity"
-  description: "Unique Cross-Site Scripting (XSS) Bypass Attempts"
+  description: "Comprehensive Cross-Site Scripting (XSS) Attack Vectors"
   enabled: true
-  name: "941-xss-unique-bypass"
+  name: "941-xss-comprehensive"
 tests:
   - test_id: 941100
     desc: "XSS via HTTP Parameter Pollution (HPP)"
@@ -88,5 +88,293 @@ tests:
               Host: "localhost"
               Content-Type: "application/x-www-form-urlencoded"
             data: "input=<<script>alert(1)//<</script>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941106
+    desc: "XSS: Markdown Image injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"comment\": \"![onerror](x onerror=alert(1))\"}"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941107
+    desc: "XSS: Data URI with Base64"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=<iframe src=data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941108
+    desc: "XSS: HTML5 autofocus + onfocus"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?name=<input autofocus onfocus=alert(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941109
+    desc: "XSS: SVG foreignObject"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "text=<svg><foreignObject><body onload=alert(1)></body></foreignObject></svg>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941110
+    desc: "XSS: img dynsrc"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?bio=<img dynsrc=javascript:alert(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941111
+    desc: "XSS: meta refresh"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "title=<meta http-equiv=refresh content=0;url=javascript:alert(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941112
+    desc: "XSS: link prefetch"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=<link rel=prefetch href=javascript:alert(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941113
+    desc: "XSS: Hex encoding"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?search=&#x3C;script&#x3E;alert(1)&#x3C;/script&#x3E;"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941114
+    desc: "XSS: Decimal encoding"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=&#60;script&#62;alert(1)&#60;/script&#62;"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941115
+    desc: "XSS: String.fromCharCode"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "input=<img src=x onerror=eval(String.fromCharCode(97,108,101,114,116,40,49,41))>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941116
+    desc: "XSS: Template literals"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?name=<script>alert`1`</script>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941117
+    desc: "XSS: Form action"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "content=<form action=javascript:alert(1)><input type=submit></form>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941118
+    desc: "XSS: object data"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?bio=<object data=javascript:alert(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941119
+    desc: "XSS: embed src"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=<embed src=javascript:alert(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941120
+    desc: "XSS: Base tag"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "title=<base href=javascript:alert(1)//>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941121
+    desc: "XSS: CSS expression()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?style=<div style=width:expression(alert(1))>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941122
+    desc: "XSS: OnError with Unicode"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?q=<img src=x \\u006fnError=alert(1)>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941123
+    desc: "XSS: MathML"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "text=<math><mtext><a xlink:href=javascript:alert(1)>click</a></mtext></math>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941124
+    desc: "XSS: Marquee onstart"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?msg=<marquee onstart=alert(1)>text</marquee>"
+          output:
+            log_contains: "id \"941"
+  - test_id: 941125
+    desc: "XSS: DOM clobbering"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "html=<form name=test><input name=action><input name=submit></form><img src=x onerror=test.action=alert;test.submit(1)>"
           output:
             log_contains: "id \"941"
