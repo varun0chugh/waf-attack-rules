@@ -1,0 +1,51 @@
+meta:
+  author: "Antigravity"
+  description: "Mass Assignment / Parameter Binding Tests"
+  enabled: true
+  name: "984-mass-assignment"
+tests:
+  - test_id: 984100
+    desc: "Mass Assignment: Admin privilege escalation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"username\": \"test\", \"password\": \"pass\", \"isAdmin\": true, \"role\": \"admin\"}"
+          output:
+            log_contains: "id \"984"
+  - test_id: 984101
+    desc: "Mass Assignment: Hidden field manipulation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "name=user&_approved=true&_verified=true"
+          output:
+            log_contains: "id \"984"
+  - test_id: 984102
+    desc: "Mass Assignment: Price manipulation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"item_id\": 123, \"quantity\": 1, \"price\": 0.01}"
+          output:
+            log_contains: "id \"984"

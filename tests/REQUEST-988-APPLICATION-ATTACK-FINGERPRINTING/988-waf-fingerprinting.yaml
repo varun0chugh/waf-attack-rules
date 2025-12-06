@@ -1,0 +1,49 @@
+meta:
+  author: "Antigravity"
+  description: "WAF Fingerprinting & Detection Tests"
+  enabled: true
+  name: "988-waf-fingerprinting"
+tests:
+  - test_id: 988100
+    desc: "WAF Fingerprinting: Error message analysis"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?id=<script>alert(1)</script>"
+          output:
+            log_contains: "id \"988"
+  - test_id: 988101
+    desc: "WAF Fingerprinting: HTTP response headers"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "id \"988"
+  - test_id: 988102
+    desc: "WAF Fingerprinting: Cookie manipulation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Cookie: "WAF_TEST_COOKIE=probe_value"
+            uri: "/"
+          output:
+            log_contains: "id \"988"

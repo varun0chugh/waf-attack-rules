@@ -1,0 +1,49 @@
+meta:
+  author: "Antigravity"
+  description: "Security Headers Bypass Tests"
+  enabled: true
+  name: "985-security-headers"
+tests:
+  - test_id: 985100
+    desc: "Security Headers: CSP Bypass via base-uri"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "text/html"
+            data: "<base href='https://evil.com'><script src='malicious.js'></script>"
+          output:
+            log_contains: "id \"985"
+  - test_id: 985101
+    desc: "Security Headers: HSTS Bypass via mixed content"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?redirect=http://unsecure.example.com"
+          output:
+            log_contains: "id \"985"
+  - test_id: 985102
+    desc: "Security Headers: X-Content-Type-Options Bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/uploads/malicious.php.jpg"
+          output:
+            log_contains: "id \"985"

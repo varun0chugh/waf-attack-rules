@@ -1,0 +1,62 @@
+meta:
+  author: "Antigravity"
+  description: "Information Disclosure Tests"
+  enabled: true
+  name: "983-info-disclosure"
+tests:
+  - test_id: 983100
+    desc: "Info Disclosure: Stack Trace in Error"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?debug=true&error=1"
+          output:
+            log_contains: "id \"983"
+  - test_id: 983101
+    desc: "Info Disclosure: .git directory access"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/.git/config"
+          output:
+            log_contains: "id \"983"
+  - test_id: 983102
+    desc: "Info Disclosure: Backup file access"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/config.php.bak"
+          output:
+            log_contains: "id \"983"
+  - test_id: 983103
+    desc: "Info Disclosure: phpinfo()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/phpinfo.php"
+          output:
+            log_contains: "id \"983"

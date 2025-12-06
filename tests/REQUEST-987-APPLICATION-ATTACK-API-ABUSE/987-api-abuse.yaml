@@ -1,0 +1,64 @@
+meta:
+  author: "Antigravity"
+  description: "API-Specific Abuse Tests"
+  enabled: true
+  name: "987-api-abuse"
+tests:
+  - test_id: 987100
+    desc: "API Abuse: Rate limit bypass via IP rotation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-Forwarded-For: "1.2.3.4, 5.6.7.8, 9.10.11.12"
+            uri: "/api/v1/users"
+          output:
+            log_contains: "id \"987"
+  - test_id: 987101
+    desc: "API Abuse: Method override to bypass restrictions"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              X-HTTP-Method-Override: "DELETE"
+            uri: "/api/v1/users/1"
+          output:
+            log_contains: "id \"987"
+  - test_id: 987102
+    desc: "API Abuse: Version downgrade attack"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/api/v1/../v0/admin"
+          output:
+            log_contains: "id \"987"
+  - test_id: 987103
+    desc: "API Abuse: Excessive data exposure"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/api/users?limit=999999&fields=*"
+          output:
+            log_contains: "id \"987"

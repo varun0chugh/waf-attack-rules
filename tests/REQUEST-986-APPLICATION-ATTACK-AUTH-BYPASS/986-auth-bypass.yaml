@@ -1,0 +1,65 @@
+meta:
+  author: "Antigravity"
+  description: "Authentication Bypass Tests"
+  enabled: true
+  name: "986-auth-bypass"
+tests:
+  - test_id: 986100
+    desc: "Auth Bypass: SQL injection in login"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "username=admin'--&password=anything"
+          output:
+            log_contains: "id \"986"
+  - test_id: 986101
+    desc: "Auth Bypass: JWT None algorithm"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Authorization: "Bearer eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ."
+            uri: "/admin"
+          output:
+            log_contains: "id \"986"
+  - test_id: 986102
+    desc: "Auth Bypass: Default credentials"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"username\": \"admin\", \"password\": \"admin\"}"
+          output:
+            log_contains: "id \"986"
+  - test_id: 986103
+    desc: "Auth Bypass: Path traversal to admin"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/user/../../admin/dashboard"
+          output:
+            log_contains: "id \"986"
