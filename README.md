@@ -305,8 +305,8 @@ If this project helps you, please consider giving it a star!
 
 ---
 
-**Created with ❤️ by Antigravity AI**  
-**Last Updated**: December 2024  
+**Created by Varun Chugh | feat.Antigravity AI**  
+**Last Updated**: December 2025 
 **Version**: 1.0.0  
 **Status**: Production Ready ✅
 
