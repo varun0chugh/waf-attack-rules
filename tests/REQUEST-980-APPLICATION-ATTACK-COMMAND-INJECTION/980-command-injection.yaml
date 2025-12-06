@@ -1,0 +1,78 @@
+meta:
+  author: "Antigravity"
+  description: "OS Command Injection Tests"
+  enabled: true
+  name: "980-command-injection"
+tests:
+  - test_id: 980100
+    desc: "Command Injection: Semicolon separator"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?file=test.txt;cat /etc/passwd"
+          output:
+            log_contains: "id \"980"
+  - test_id: 980101
+    desc: "Command Injection: Pipe operator"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "cmd=ls | whoami"
+          output:
+            log_contains: "id \"980"
+  - test_id: 980102
+    desc: "Command Injection: Ampersand separator"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?exec=ping 127.0.0.1 & id"
+          output:
+            log_contains: "id \"980"
+  - test_id: 980103
+    desc: "Command Injection: Backtick execution"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"input\": \"`cat /etc/shadow`\"}"
+          output:
+            log_contains: "id \"980"
+  - test_id: 980104
+    desc: "Command Injection: Command substitution $()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/?var=$(whoami)"
+          output:
+            log_contains: "id \"980"

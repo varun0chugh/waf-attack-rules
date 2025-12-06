@@ -1,0 +1,77 @@
+meta:
+  author: "Antigravity"
+  description: "Insecure Direct Object Reference (IDOR) Tests"
+  enabled: true
+  name: "982-idor"
+tests:
+  - test_id: 982100
+    desc: "IDOR: Sequential ID enumeration"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/api/users/1/profile"
+          output:
+            log_contains: "id \"982"
+  - test_id: 982101
+    desc: "IDOR: UUID manipulation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/api/documents/550e8400-e29b-41d4-a716-446655440000"
+          output:
+            log_contains: "id \"982"
+  - test_id: 982102
+    desc: "IDOR: Path traversal combined"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/files/../../../admin/config.json"
+          output:
+            log_contains: "id \"982"
+  - test_id: 982103
+    desc: "IDOR: Parameter tampering"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"user_id\": 1, \"target_user_id\": 2, \"action\": \"delete\"}"
+          output:
+            log_contains: "id \"982"
+  - test_id: 982104
+    desc: "IDOR: Base64 encoded ID"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/profile?id=YWRtaW4="
+          output:
+            log_contains: "id \"982"

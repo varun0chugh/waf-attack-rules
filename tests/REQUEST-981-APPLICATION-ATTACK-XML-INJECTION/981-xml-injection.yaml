@@ -1,0 +1,66 @@
+meta:
+  author: "Antigravity"
+  description: "XML Injection Tests (beyond XXE)"
+  enabled: true
+  name: "981-xml-injection"
+tests:
+  - test_id: 981100
+    desc: "XML Injection: Malformed XML Structure"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "text/xml"
+            data: "<?xml version=\"1.0\"?><user><name>admin</name><role>user</role></user><role>admin</role></user>"
+          output:
+            log_contains: "id \"981"
+  - test_id: 981101
+    desc: "XML Injection: CDATA section abuse"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><comment><![CDATA[<script>alert(1)</script>]]></comment>"
+          output:
+            log_contains: "id \"981"
+  - test_id: 981102
+    desc: "XML Injection: Attribute injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "text/xml"
+            data: "<?xml version=\"1.0\"?><user id=\"1\" role=\"admin\"><name>test</name></user>"
+          output:
+            log_contains: "id \"981"
+  - test_id: 981103
+    desc: "XML Injection: Namespace manipulation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><root xmlns:evil=\"http://attacker.com\"><evil:data>malicious</evil:data></root>"
+          output:
+            log_contains: "id \"981"

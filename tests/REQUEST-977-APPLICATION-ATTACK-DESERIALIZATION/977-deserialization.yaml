@@ -1,0 +1,81 @@
+meta:
+  author: "Antigravity"
+  description: "Deserialization Attack Tests (Generic + Platform-Specific)"
+  enabled: true
+  name: "977-deserialization"
+tests:
+  - test_id: 977100
+    desc: "Java Deserialization: YSoSerial Commons Collections"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-java-serialized-object"
+            data: "rO0ABXNyABdqYXZhLnV0aWwuUHJpb3JpdHlRdWV1ZQ=="
+          output:
+            log_contains: "id \"977"
+  - test_id: 977101
+    desc: "Python Pickle Deserialization"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-python-serialize"
+            data: "c__builtin__\neval\n(S'__import__(\"os\").system(\"id\")'\ntR."
+          output:
+            log_contains: "id \"977"
+  - test_id: 977102
+    desc: ".NET BinaryFormatter Deserialization"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/octet-stream"
+            data: "AAEAAAD/////AQAAAAAAAAAMAgAAAEtNc2NvcmxpYg=="
+          output:
+            log_contains: "id \"977"
+  - test_id: 977103
+    desc: "PHP Unserialize Object Injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "data=O:8:\"stdClass\":1:{s:4:\"file\";s:11:\"/etc/passwd\";}"
+          output:
+            log_contains: "id \"977"
+  - test_id: 977104
+    desc: "Ruby Marshal Deserialization"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "application/x-ruby-marshal"
+            data: "BAhvOhFPYmplY3RfVGVtcGxhdGUH"
+          output:
+            log_contains: "id \"977"

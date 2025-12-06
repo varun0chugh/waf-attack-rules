@@ -1,0 +1,50 @@
+meta:
+  author: "Antigravity"
+  description: "Clickjacking / UI Redressing Tests"
+  enabled: true
+  name: "979-clickjacking"
+tests:
+  - test_id: 979100
+    desc: "Clickjacking: Missing X-Frame-Options"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "id \"979"
+  - test_id: 979101
+    desc: "Clickjacking: CSP frame-ancestors bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Referer: "http://evil.com/iframe.html"
+            uri: "/sensitive-action"
+          output:
+            log_contains: "id \"979"
+  - test_id: 979102
+    desc: "Clickjacking: Iframe overlay attack"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost"
+              Content-Type: "text/html"
+            data: "<iframe src='https://victim.com/delete-account' style='opacity:0;position:absolute;top:0;left:0;width:100%;height:100%'></iframe>"
+          output:
+            log_contains: "id \"979"

@@ -1,0 +1,64 @@
+meta:
+  author: "Antigravity"
+  description: "Host Header Injection Tests"
+  enabled: true
+  name: "978-host-header-injection"
+tests:
+  - test_id: 978100
+    desc: "Host Header Injection: Password Reset Poisoning"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "evil.com"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "email=victim@example.com"
+          output:
+            log_contains: "id \"978"
+  - test_id: 978101
+    desc: "Host Header Injection: Web Cache Poisoning"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "attacker.com"
+            uri: "/"
+          output:
+            log_contains: "id \"978"
+  - test_id: 978102
+    desc: "Host Header Injection: SSRF via Host"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "localhost:22"
+            uri: "/"
+          output:
+            log_contains: "id \"978"
+  - test_id: 978103
+    desc: "Host Header Injection: Multiple Host Headers"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester"
+              Host: "trusted.com"
+              Host: "evil.com"
+            uri: "/"
+          output:
+            log_contains: "id \"978"
