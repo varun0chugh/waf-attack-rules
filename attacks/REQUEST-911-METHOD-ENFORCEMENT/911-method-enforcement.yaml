@@ -1,0 +1,257 @@
+meta:
+  author: "Security Engineer"
+  description: "Method Enforcement Tests"
+  enabled: true
+  name: "911-method-enforcement.yaml"
+tests:
+  - test_id: "911100"
+    desc: "TRACE method (used for XST)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "TRACE"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "911101"
+    desc: "DEBUG method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "DEBUG"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "911102"
+    desc: "CONNECT method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "CONNECT"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "www.example.com:80"
+        output:
+          log_contains: "id"
+  - test_id: "911103"
+    desc: "PROPFIND method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "PROPFIND"
+          port: 80
+          headers:
+            Host: "localhost"
+            Depth: "1"
+          uri: "/webdav/"
+        output:
+          log_contains: "id"
+  - test_id: "911104"
+    desc: "PROPPATCH method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "PROPPATCH"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Type: "application/xml"
+          uri: "/webdav/"
+          data: "<?xml version=\\"1.0\\" encoding=\\"utf-8\\" ?>..."
+        output:
+          log_contains: "id"
+  - test_id: "911105"
+    desc: "MKCOL method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "MKCOL"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/newfolder/"
+        output:
+          log_contains: "id"
+  - test_id: "911106"
+    desc: "COPY method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "COPY"
+          port: 80
+          headers:
+            Host: "localhost"
+            Destination: "http://localhost/dest"
+          uri: "/source"
+        output:
+          log_contains: "id"
+  - test_id: "911107"
+    desc: "MOVE method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "MOVE"
+          port: 80
+          headers:
+            Host: "localhost"
+            Destination: "http://localhost/dest"
+          uri: "/source"
+        output:
+          log_contains: "id"
+  - test_id: "911108"
+    desc: "LOCK method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "LOCK"
+          port: 80
+          headers:
+            Host: "localhost"
+            Timeout: "Infinite, Second-4100000000"
+          uri: "/resource"
+        output:
+          log_contains: "id"
+  - test_id: "911109"
+    desc: "UNLOCK method"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "UNLOCK"
+          port: 80
+          headers:
+            Host: "localhost"
+            Lock-Token: "<urn:uuid:a515cfa4-5da4-22e1-f5b5-00a0451e6bf7>"
+          uri: "/resource"
+        output:
+          log_contains: "id"
+  - test_id: "911110"
+    desc: "PATCH with malicious body"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "PATCH"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Type: "application/json-patch+json"
+          uri: "/api/user/1"
+          data: "[{\\"op\\": \\"replace\\", \\"path\\": \\"/role\\", \\"value\\": \\"admin\\"}]"
+        output:
+          log_contains: "id"
+  - test_id: "911111"
+    desc: "DELETE method abuse"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "DELETE"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/etc/passwd"
+        output:
+          log_contains: "id"
+  - test_id: "911112"
+    desc: "OPTIONS method enumeration"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "OPTIONS"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "*"
+        output:
+          log_contains: "id"
+  - test_id: "911113"
+    desc: "Custom HTTP method JEFF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "JEFF"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "911114"
+    desc: "Custom HTTP method HACK"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "HACK"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "911115"
+    desc: "PUT method for file upload"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "PUT"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Type: "text/html"
+          uri: "/shell.jsp"
+          data: "<% Runtime.getRuntime().exec(request.getParameter(\\"cmd\\")); %>"
+        output:
+          log_contains: "id"
+  - test_id: "911116"
+    desc: "BCOPY method (WebDAV)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "BCOPY"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "911117"
+    desc: "BDELETE method (WebDAV)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "BDELETE"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "911118"
+    desc: "BMOVE method (WebDAV)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "BMOVE"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "911119"
+    desc: "BPROPFIND method (WebDAV)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "BPROPFIND"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"

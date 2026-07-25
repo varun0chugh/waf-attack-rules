@@ -1,0 +1,266 @@
+meta:
+  author: "Security Engineer"
+  description: "Data Leakage and Information Disclosure Tests"
+  enabled: true
+  name: "950-data-leakage.yaml"
+tests:
+  - test_id: 950100
+    desc: "Credit card pattern exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/leak?type=cc"
+        output:
+          log_contains: "4111111111111111"
+  - test_id: 950101
+    desc: "SSN pattern exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/leak?type=ssn"
+        output:
+          log_contains: "123-45-6789"
+  - test_id: 950102
+    desc: "Directory listing detection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/images/"
+        output:
+          log_contains: "Index of /"
+  - test_id: 950103
+    desc: "Java stack trace exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/error?type=java"
+        output:
+          log_contains: "java.lang.Exception"
+  - test_id: 950104
+    desc: "Python stack trace exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/error?type=python"
+        output:
+          log_contains: "Traceback (most recent call last):"
+  - test_id: 950105
+    desc: ".NET stack trace exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/error?type=dotnet"
+        output:
+          log_contains: "at System."
+  - test_id: 950106
+    desc: "MySQL error message leakage"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/db?query=mysql"
+        output:
+          log_contains: "mysql_fetch"
+  - test_id: 950107
+    desc: "Oracle SQL error leakage"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/db?query=oracle"
+        output:
+          log_contains: "ORA-"
+  - test_id: 950108
+    desc: "ODBC error leakage"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/db?query=odbc"
+        output:
+          log_contains: "[ODBC"
+  - test_id: 950109
+    desc: "SQLite error leakage"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/db?query=sqlite"
+        output:
+          log_contains: "SQLite3::SQLException"
+  - test_id: 950110
+    desc: "PHP Fatal error exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/php?err=fatal"
+        output:
+          log_contains: "Fatal error:"
+  - test_id: 950111
+    desc: "PHP Warning include exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/php?err=warning"
+        output:
+          log_contains: "Warning: include("
+  - test_id: 950112
+    desc: "PHP Source code disclosure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/source?type=php"
+        output:
+          log_contains: "<?php"
+  - test_id: 950113
+    desc: "JSP Source code disclosure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/source?type=jsp"
+        output:
+          log_contains: "<%@"
+  - test_id: 950114
+    desc: "Server version disclosure via headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "Server: Apache/2.4"
+  - test_id: 950115
+    desc: "Internal IP disclosure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/config"
+        output:
+          log_contains: "192.168."
+  - test_id: 950116
+    desc: "AWS credential exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/env"
+        output:
+          log_contains: "AKIA"
+  - test_id: 950117
+    desc: "Private key detection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/keys/id_rsa"
+        output:
+          log_contains: "BEGIN RSA PRIVATE KEY"
+  - test_id: 950118
+    desc: ".env file exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/.env"
+        output:
+          log_contains: "DB_PASSWORD="
+  - test_id: 950119
+    desc: ".git directory exposure"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/.git/config"
+        output:
+          log_contains: "[core]"

@@ -1,0 +1,208 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive Session Fixation attacks (REQUEST-943)"
+  enabled: true
+  name: "943-session-fixation.yaml"
+tests:
+  - test_id: 943100
+    desc: "Session fixation via URL PHPSESSID"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login.php?PHPSESSID=attacker_session_123"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943101
+    desc: "JSESSIONID fixation in URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/app/login;jsessionid=attacker_session_123"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943102
+    desc: "ASP.NET_SessionId fixation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login.aspx?(S(attacker_session_123))/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943103
+    desc: "Session fixation via hidden form field"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/login"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "username=admin&password=password&session_id=attacker_session_123"
+          output:
+            log_contains: "id"
+  - test_id: 943104
+    desc: "Cookie tossing attack"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/"
+            headers:
+              Host: "localhost"
+              Cookie: "sessionid=attacker_session; sessionid=valid_session"
+          output:
+            log_contains: "id"
+  - test_id: 943105
+    desc: "Meta tag session injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/profile?msg=<meta http-equiv='Set-Cookie' content='session=attacker_session'>"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943106
+    desc: "Cross-site cooking"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/xss?payload=<script>document.cookie=\"session=attacker_session; domain=.example.com; path=/\"</script>"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943107
+    desc: "Session token in URL rewriting"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/rewrite?token=attacker_session_123&redirect=/home"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943108
+    desc: "Cross-subdomain session fixation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/"
+            headers:
+              Host: "localhost"
+              Cookie: "sessionid=attacker_session_123; domain=.victim.com"
+          output:
+            log_contains: "id"
+  - test_id: 943109
+    desc: "Session donation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/donate?session=attacker_session_123"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943110
+    desc: "Session prediction pattern (sequential)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/"
+            headers:
+              Host: "localhost"
+              Cookie: "session_id=000001"
+          output:
+            log_contains: "id"
+  - test_id: 943111
+    desc: "Session prediction pattern (timestamp)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/"
+            headers:
+              Host: "localhost"
+              Cookie: "session_id=1672531200"
+          output:
+            log_contains: "id"
+  - test_id: 943112
+    desc: "Session fixation via cookie injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/set_theme?theme=dark%0d%0aSet-Cookie:%20sessionid=attacker_session_123"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943113
+    desc: "Session fixation with arbitrary parameter"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?auth_token=attacker_token_123"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 943114
+    desc: "Session ID via path traversal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login/../../app?session=attacker_session"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"

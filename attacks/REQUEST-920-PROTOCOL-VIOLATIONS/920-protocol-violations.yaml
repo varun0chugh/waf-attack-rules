@@ -1,0 +1,541 @@
+meta:
+  author: "Security Engineer"
+  description: "Protocol Violations Tests"
+  enabled: true
+  name: "920-protocol-violations.yaml"
+tests:
+  - test_id: "920100"
+    desc: "Missing Host header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Accept: "*/*"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920101"
+    desc: "Duplicate Host header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: 
+              - "localhost"
+              - "evil.com"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920102"
+    desc: "Host header with IP address"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "192.168.1.1"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920103"
+    desc: "Content-Length mismatch"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "100"
+          uri: "/"
+          data: "short"
+        output:
+          log_contains: "id"
+  - test_id: "920104"
+    desc: "Transfer-Encoding with invalid value"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Transfer-Encoding: "invalid"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920105"
+    desc: "Chunked Transfer-Encoding abuse"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Transfer-Encoding: "chunked"
+          uri: "/"
+          data: "4\\r\\ntest\\r\\n0\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "920106"
+    desc: "Request smuggling (CL.TE)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "13"
+            Transfer-Encoding: "chunked"
+          uri: "/"
+          data: "0\\r\\n\\r\\nGET /x HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "920107"
+    desc: "Request smuggling (TE.CL)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "4"
+            Transfer-Encoding: "chunked"
+          uri: "/"
+          data: "12\\r\\nGET /x HTTP/1.1\\r\\n0\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "920108"
+    desc: "HTTP/0.9 request"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers: {}
+          uri: "/"
+          version: "HTTP/0.9"
+        output:
+          log_contains: "id"
+  - test_id: "920109"
+    desc: "Invalid HTTP version"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+          version: "HTTP/2.5"
+        output:
+          log_contains: "id"
+  - test_id: "920110"
+    desc: "Extremely long URI (>8192 chars)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/?q=A"
+        output:
+          log_contains: "id"
+  - test_id: "920111"
+    desc: "Extremely long header value"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            User-Agent: "A"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920112"
+    desc: "Null bytes in headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Custom: "foo\\0bar"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920113"
+    desc: "CRLF injection in headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Custom: "foo\\r\\nbar: baz"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920114"
+    desc: "Response splitting attempt"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/?lang=en\\r\\nSet-Cookie:%20session=hack"
+        output:
+          log_contains: "id"
+  - test_id: "920115"
+    desc: "Invalid Content-Type"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Type: "invalid/type"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920116"
+    desc: "Multipart boundary abuse"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Type: "multipart/form-data; boundary=---------------------------malformed"
+          uri: "/"
+          data: "-----------------------------malformed\\r\\nContent-Disposition: form-data; name=\\"file\\"; filename=\\"test.txt\\"\\r\\n\\r\\ntest\\r\\n-----------------------------malformed--"
+        output:
+          log_contains: "id"
+  - test_id: "920117"
+    desc: "Multiple Content-Type headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Type:
+              - "application/x-www-form-urlencoded"
+              - "application/json"
+          uri: "/"
+          data: '{"a": 1}'
+        output:
+          log_contains: "id"
+  - test_id: "920118"
+    desc: "HTTP request smuggling via H2"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            x-forwarded-for: "127.0.0.1\\r\\nTransfer-Encoding: chunked"
+          uri: "/"
+          data: "0\\r\\n\\r\\nGET /admin HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "920119"
+    desc: "Desync attacks"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "4"
+            Transfer-Encoding: " \\tchunked"
+          uri: "/"
+          data: "3\\r\\nabc\\r\\n0\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "920120"
+    desc: "Empty Host header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: ""
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920121"
+    desc: "Host header with port"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost:8080"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920122"
+    desc: "Multiple Transfer-Encoding headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Transfer-Encoding:
+              - "chunked"
+              - "gzip"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920123"
+    desc: "Transfer-Encoding with Content-Length"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "10"
+            Transfer-Encoding: "chunked"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920124"
+    desc: "Invalid character in header name"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            "X-Inv@lid": "test"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920125"
+    desc: "Missing Accept header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920126"
+    desc: "Missing User-Agent header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920127"
+    desc: "Non-ASCII characters in header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Test: "é"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920128"
+    desc: "Line folding in headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Test: "foo\\r\\n bar"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920129"
+    desc: "Empty header name"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            "": "value"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920130"
+    desc: "Whitespace before URI"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: " /"
+        output:
+          log_contains: "id"
+  - test_id: "920131"
+    desc: "Invalid character in URI"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/test<>"
+        output:
+          log_contains: "id"
+  - test_id: "920132"
+    desc: "Multiple Content-Length headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length:
+              - "5"
+              - "5"
+          uri: "/"
+          data: "hello"
+        output:
+          log_contains: "id"
+  - test_id: "920133"
+    desc: "Content-Length with non-numeric value"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "abc"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920134"
+    desc: "Negative Content-Length"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "-1"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920135"
+    desc: "Body in GET request"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "4"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920136"
+    desc: "Missing Content-Length in POST"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/"
+          data: "test"
+        output:
+          log_contains: "id"
+  - test_id: "920137"
+    desc: "Space before header name"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            " X-Test": "value"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920138"
+    desc: "Double CRLF in header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Test: "foo\\r\\n\\r\\nbar"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "920139"
+    desc: "Tab character in URI"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/test\\t"
+        output:
+          log_contains: "id"

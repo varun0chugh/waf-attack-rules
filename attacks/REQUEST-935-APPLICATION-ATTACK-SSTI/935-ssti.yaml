@@ -1,0 +1,416 @@
+meta:
+  author: "Security Engineer"
+  description: "SSTI Attack Detection Tests"
+  enabled: true
+  name: "935-ssti.yaml"
+tests:
+  - test_id: 935100
+    desc: "Jinja2 SSTI math eval"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/search?q={{7*7}}"
+        output:
+          log_contains: "{{"
+  - test_id: 935101
+    desc: "Jinja2 SSTI config access"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/template"
+          data: "tpl={{config}}"
+        output:
+          log_contains: "config"
+  - test_id: 935102
+    desc: "Jinja2 SSTI RCE via request.application.__globals__"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/view?t={{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}"
+        output:
+          log_contains: "__globals__"
+  - test_id: 935103
+    desc: "Twig SSTI RCE via _self.env.registerUndefinedFilterCallback"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/render"
+          data: '{"tpl":"{{_self.env.registerUndefinedFilterCallback(\"exec\")}}{{_self.env.getFilter(\"id\")}}"}'
+        output:
+          log_contains: "registerUndefinedFilterCallback"
+  - test_id: 935104
+    desc: "Freemarker SSTI via Execute"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/search?q=<#assign ex=\"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}"
+        output:
+          log_contains: "freemarker.template.utility.Execute"
+  - test_id: 935105
+    desc: "Velocity SSTI java.lang.Runtime"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/velocity"
+          data: "tmpl=#set($x='')+#set($rt=$x.class.forName('java.lang.Runtime'))+#set($chr=$x.class.forName('java.lang.Character'))"
+        output:
+          log_contains: "java.lang.Runtime"
+  - test_id: 935106
+    desc: "Mako SSTI os.popen"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/mako?t=${%22os%22.popen(%22id%22).read()}"
+        output:
+          log_contains: "os.popen"
+  - test_id: 935107
+    desc: "Smarty SSTI RCE"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/smarty"
+          data: "tpl={php}echo id;{/php}"
+        output:
+          log_contains: "{php}"
+  - test_id: 935108
+    desc: "Pebble SSTI RCE via java.lang.Runtime"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/pebble?q={{%20beans.get(%22java.lang.Runtime%22).getRuntime().exec(%22id%22)%20}}"
+        output:
+          log_contains: "java.lang.Runtime"
+  - test_id: 935109
+    desc: "Handlebars SSTI via Object.prototype"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/handlebars"
+          data: '{"tpl":"{{#with \"s\" as |string|}}{{#with string.constructor.prototype as |proto|}}{{proto.hasOwnProperty(\"constructor\")}}{{/with}}{{/with}}"}'
+        output:
+          log_contains: "constructor.prototype"
+  - test_id: 935110
+    desc: "ERB/Ruby SSTI system()"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/erb?q=<%= system('id') %>"
+        output:
+          log_contains: "system("
+  - test_id: 935111
+    desc: "Thymeleaf SSTI java.lang.Runtime"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/thymeleaf"
+          data: "msg=__${T(java.lang.Runtime).getRuntime().exec('id')}__"
+        output:
+          log_contains: "java.lang.Runtime"
+  - test_id: 935112
+    desc: "Razor SSTI (.NET) System.Diagnostics.Process"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/razor?q=@(System.Diagnostics.Process.Start(\"cmd.exe\", \"/c id\"))"
+        output:
+          log_contains: "System.Diagnostics.Process"
+  - test_id: 935113
+    desc: "EJS SSTI process.mainModule"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/ejs"
+          data: '{"tpl":"<%= process.mainModule.require(\"child_process\").execSync(\"id\") %>"}'
+        output:
+          log_contains: "process.mainModule"
+  - test_id: 935114
+    desc: "Nunjucks SSTI global.process"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/nunjucks?q={{range.constructor(\"return global.process.mainModule.require('child_process').execSync('id')\")()}}"
+        output:
+          log_contains: "global.process"
+  - test_id: 935115
+    desc: "Jade/Pug SSTI"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/pug"
+          data: "tpl=#{process.mainModule.require('child_process').execSync('id')}"
+        output:
+          log_contains: "process.mainModule"
+  - test_id: 935116
+    desc: "Generic SSTI detection curly braces"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/search?q={{7*'7'}}"
+        output:
+          log_contains: "{{"
+  - test_id: 935117
+    desc: "Generic SSTI detection dollar curly"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/search?q=${7*7}"
+        output:
+          log_contains: "${"
+  - test_id: 935118
+    desc: "Generic SSTI detection hash curly"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/search?q=#{7*7}"
+        output:
+          log_contains: "#{"
+  - test_id: 935119
+    desc: "Generic SSTI detection star curly"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/search?q=*{7*7}"
+        output:
+          log_contains: "*{"
+  - test_id: 935120
+    desc: "Jinja2 SSTI string format bypass"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/view?q={{''.__class__.__mro__[1].__subclasses__()}}"
+        output:
+          log_contains: "__subclasses__"
+  - test_id: 935121
+    desc: "Tornado SSTI RCE"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/tornado?q={%20import%20os%20%}{{os.popen('id').read()}}"
+        output:
+          log_contains: "os.popen"
+  - test_id: 935122
+    desc: "Django SSTI attempt"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/django?q={%20debug%20%}"
+        output:
+          log_contains: "debug"
+  - test_id: 935123
+    desc: "Flask/Jinja2 SSTI base64 bypass"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/flask"
+          data: '{"tpl":"{{().__class__.__bases__[0].__subclasses__()[59].__init__.__globals__.linecache.os.popen(\"Y2F0IC9ldGMvcGFzc3dk\".decode(\"base64\")).read()}}"}'
+        output:
+          log_contains: "__subclasses__"
+  - test_id: 935124
+    desc: "PHP Smarty RCE Math"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/smarty2?q={math%20equation=\"system('id')\"}"
+        output:
+          log_contains: "system"
+  - test_id: 935125
+    desc: "PHP Twig SSTI array filter"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/twig2?q={{['id']|filter('system')}}"
+        output:
+          log_contains: "filter"
+  - test_id: 935126
+    desc: "Velocity SSTI ProcessBuilder"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/vel"
+          data: "q=#set($engine=\"\")#set($bean=$engine.getClass().forName(\"java.lang.ProcessBuilder\").newInstance())"
+        output:
+          log_contains: "ProcessBuilder"
+  - test_id: 935127
+    desc: "Freemarker SSTI api.class"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/fm2?q=${class.api.class.forName(\"java.lang.Runtime\").getMethod(\"getRuntime\",null).invoke(null,null).exec(\"id\")}"
+        output:
+          log_contains: "api.class"
+  - test_id: 935128
+    desc: "Ruby ERB File Read"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/erb2?q=<%= File.open('/etc/passwd').read %>"
+        output:
+          log_contains: "File.open"
+  - test_id: 935129
+    desc: "Groovy SSTI"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/groovy?q=${'id'.execute().text}"
+        output:
+          log_contains: "execute"

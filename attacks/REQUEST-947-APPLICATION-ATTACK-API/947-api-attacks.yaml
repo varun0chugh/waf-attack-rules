@@ -1,0 +1,236 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive API attacks (REQUEST-947)"
+  enabled: true
+  name: "947-api-attacks.yaml"
+tests:
+  - test_id: 947100
+    desc: "GraphQL introspection query"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/graphql"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"query": "{ __schema { types { name fields { name } } } }"}'
+          output:
+            log_contains: "id"
+  - test_id: 947101
+    desc: "GraphQL batch query abuse"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/graphql"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '[{"query":"{ user(id:1){name} }"},{"query":"{ user(id:2){name} }"},{"query":"{ user(id:3){name} }"}]'
+          output:
+            log_contains: "id"
+  - test_id: 947102
+    desc: "GraphQL deeply nested query (DoS)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/graphql"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"query": "{ user(id:1) { posts { author { posts { author { posts { author { name } } } } } } } }"}'
+          output:
+            log_contains: "id"
+  - test_id: 947103
+    desc: "JWT none algorithm attack"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/api/user"
+            headers:
+              Host: "localhost"
+              Authorization: "Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiaGFja2VyIiwiYWRtaW4iOnRydWV9."
+          output:
+            log_contains: "id"
+  - test_id: 947104
+    desc: "JWT algorithm confusion"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/api/user"
+            headers:
+              Host: "localhost"
+              Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4ifQ.signature"
+          output:
+            log_contains: "id"
+  - test_id: 947105
+    desc: "API mass assignment"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users/update"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"username":"hacker","email":"hacker@test.com","role":"admin","is_admin":true}'
+          output:
+            log_contains: "id"
+  - test_id: 947106
+    desc: "BOLA/IDOR patterns"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/api/v1/users/9999/private_data"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 947107
+    desc: "XML-RPC method calls system.listMethods"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/xmlrpc.php"
+            headers:
+              Host: "localhost"
+              Content-Type: "text/xml"
+            data: "<?xml version=\"1.0\"?><methodCall><methodName>system.listMethods</methodName><params></params></methodCall>"
+          output:
+            log_contains: "id"
+  - test_id: 947108
+    desc: "REST API verb tampering"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "PUT"
+            port: 80
+            uri: "/api/users/delete/1"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 947109
+    desc: "API key in URL exposure"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/api/data?api_key=AIzaSyB-attacker-key-123"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 947110
+    desc: "Server-side prototype pollution via JSON merge"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/config/update"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"__proto__":{"isAdmin":true}}'
+          output:
+            log_contains: "id"
+  - test_id: 947111
+    desc: "JSON injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/login"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"username":"admin\",\"isAdmin\":true,\"ignore\":\"","password":"password"}'
+          output:
+            log_contains: "id"
+  - test_id: 947112
+    desc: "BFLA (Broken Function Level Authorization)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/api/admin/system/status"
+            headers:
+              Host: "localhost"
+              Authorization: "Bearer user_token_not_admin"
+          output:
+            log_contains: "id"
+  - test_id: 947113
+    desc: "WordPress XML-RPC pingback"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/xmlrpc.php"
+            headers:
+              Host: "localhost"
+              Content-Type: "text/xml"
+            data: "<?xml version=\"1.0\"?><methodCall><methodName>pingback.ping</methodName><params><param><value><string>http://attacker.com</string></value></param><param><value><string>http://victim.com/post</string></value></param></params></methodCall>"
+          output:
+            log_contains: "id"
+  - test_id: 947114
+    desc: "JWT kid injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/api/user"
+            headers:
+              Host: "localhost"
+              Authorization: "Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6Ii4uLy4uLy4uL2Rldi9udWxsIn0.eyJ1c2VyIjoiYWRtaW4ifQ.empty_sig"
+          output:
+            log_contains: "id"
+  - test_id: 947115
+    desc: "API rate limiting bypass via X-Forwarded-For"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/api/login"
+            headers:
+              Host: "localhost"
+              X-Forwarded-For: "1.2.3.4"
+          output:
+            log_contains: "id"

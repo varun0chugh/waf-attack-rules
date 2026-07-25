@@ -1,0 +1,274 @@
+meta:
+  author: "Security Engineer"
+  description: "CRLF Injection and HTTP Response Splitting Tests"
+  enabled: true
+  name: "945-crlf-header-injection.yaml"
+tests:
+  - test_id: 945100
+    desc: "CRLF in URL basic payload"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/redirect?url=http://example.com%0d%0aX-Injected-Header:+true"
+        output:
+          log_contains: "%0d%0a"
+  - test_id: 945101
+    desc: "Double CRLF for body injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/page?lang=en%0d%0a%0d%0a<script>alert(1)</script>"
+        output:
+          log_contains: "%0d%0a%0d%0a"
+  - test_id: 945102
+    desc: "Unicode CRLF variants (%E5%98%8A%E5%98%8D)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/path?u=abc%E5%98%8A%E5%98%8DSet-Cookie:+session=evil"
+        output:
+          log_contains: "%E5%98%8A"
+  - test_id: 945103
+    desc: "HTTP header injection via CRLF (raw)"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            X-Forwarded-For: "127.0.0.1\r\nX-Injected: bypass"
+          uri: "/api"
+        output:
+          log_contains: "X-Injected"
+  - test_id: 945104
+    desc: "Set-Cookie injection via CRLF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/set?cookie=val%0d%0aSet-Cookie:+admin=true"
+        output:
+          log_contains: "Set-Cookie:"
+  - test_id: 945105
+    desc: "Cache-Control injection via CRLF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/file?name=test.txt%0d%0aCache-Control:+no-cache"
+        output:
+          log_contains: "Cache-Control"
+  - test_id: 945106
+    desc: "Host header injection with CRLF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost\r\nX-Forwarded-Host: evil.com"
+          uri: "/"
+        output:
+          log_contains: "evil.com"
+  - test_id: 945107
+    desc: "Content-Type header injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/download?type=pdf%0d%0aContent-Type:+text/html"
+        output:
+          log_contains: "Content-Type"
+  - test_id: 945108
+    desc: "Location header injection open redirect"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/go?to=%0d%0aLocation:+http://evil.com"
+        output:
+          log_contains: "Location"
+  - test_id: 945109
+    desc: "Log injection via CRLF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/login"
+          data: '{"username":"admin\r\n[INFO] User admin logged in successfully","password":"123"}'
+        output:
+          log_contains: "[INFO]"
+  - test_id: 945110
+    desc: "SMTP header injection via CRLF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/contact"
+          data: "email=user@example.com%0d%0abcc:attacker@evil.com&msg=hello"
+        output:
+          log_contains: "bcc:"
+  - test_id: 945111
+    desc: "CRLF via urlencoded %0A%0D"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/test?param=val%0a%0dHeader:+val"
+        output:
+          log_contains: "%0a%0d"
+  - test_id: 945112
+    desc: "CRLF injection in Referer"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Referer: "http://localhost/\r\nInjected: true"
+          uri: "/"
+        output:
+          log_contains: "Injected"
+  - test_id: 945113
+    desc: "CRLF injection in User-Agent"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0\r\nConnection: keep-alive"
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "Connection"
+  - test_id: 945114
+    desc: "CRLF double encoded %250d%250a"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/path?p=%250d%250aX-Header:+test"
+        output:
+          log_contains: "%250d"
+  - test_id: 945115
+    desc: "CRLF triple encoded %25250d%25250a"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/test?q=%25250d%25250aSet-Cookie:+test"
+        output:
+          log_contains: "%25250d"
+  - test_id: 945116
+    desc: "CRLF bypass with null byte %00%0d%0a"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/test?q=val%00%0d%0aInjected:+header"
+        output:
+          log_contains: "%00%0d"
+  - test_id: 945117
+    desc: "CRLF bypass with semicolon"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/redirect?url=http://example.com;%0d%0aSet-Cookie:+evil"
+        output:
+          log_contains: ";%0d"
+  - test_id: 945118
+    desc: "CRLF injection via XML"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/xml"
+          uri: "/xml"
+          data: "<root><element>val&#x0d;&#x0a;Injected</element></root>"
+        output:
+          log_contains: "&#x0d;"
+  - test_id: 945119
+    desc: "CRLF injection multiple headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/test?q=%0d%0aSet-Cookie:+c1=v1%0d%0aSet-Cookie:+c2=v2"
+        output:
+          log_contains: "c1=v1"

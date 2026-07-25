@@ -1,0 +1,220 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive SSRF test cases (REQUEST-912)"
+  enabled: true
+  name: "912-ssrf-comprehensive.yaml"
+tests:
+  - test_id: 912100
+    desc: "AWS metadata (169.254.169.254)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://169.254.169.254/latest/meta-data/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912101
+    desc: "GCP metadata (metadata.google.internal)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://metadata.google.internal/computeMetadata/v1/"
+            headers:
+              Host: "localhost"
+              Metadata-Flavor: "Google"
+          output:
+            log_contains: "id"
+  - test_id: 912102
+    desc: "Localhost bypass IP-in-decimal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://2130706433/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912103
+    desc: "Localhost bypass IP-in-hex"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://0x7f.0x00.0x00.0x01/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912104
+    desc: "Localhost bypass IP-in-octal"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://0177.0.0.1/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912105
+    desc: "IPv6 variants"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://[::ffff:127.0.0.1]/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912106
+    desc: "URL schema bypass dict://"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=dict://127.0.0.1:11211/stat"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912107
+    desc: "SSRF via Referer header"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/"
+            headers:
+              Host: "localhost"
+              Referer: "http://169.254.169.254/"
+          output:
+            log_contains: "id"
+  - test_id: 912108
+    desc: "SSRF via webhook URL"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/webhooks/create"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/json"
+            data: '{"webhook_url": "http://localhost:22"}'
+          output:
+            log_contains: "id"
+  - test_id: 912109
+    desc: "Azure metadata"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://169.254.169.254/metadata/instance?api-version=2017-08-01"
+            headers:
+              Host: "localhost"
+              Metadata: "true"
+          output:
+            log_contains: "id"
+  - test_id: 912110
+    desc: "SSRF via redirect chain"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/fetch?url=http://attacker.com/redirect-to-metadata"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912111
+    desc: "Internal port scanning via SSRF"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/check_status?url=http://192.168.0.1:22/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912112
+    desc: "URL schema bypass gopher://"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=gopher://127.0.0.1:3306/_"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912113
+    desc: "DigitalOcean metadata"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://169.254.169.254/metadata/v1/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912114
+    desc: "Localhost bypass 0.0.0.0"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://0.0.0.0/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 912115
+    desc: "DNS rebinding attack pattern"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/proxy?url=http://rebind.attacker.com/"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"

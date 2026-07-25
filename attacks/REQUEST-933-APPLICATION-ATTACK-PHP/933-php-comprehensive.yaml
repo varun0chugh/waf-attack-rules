@@ -1,0 +1,253 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive PHP application attack test cases (REQUEST-933)"
+  enabled: true
+  name: "933-php-comprehensive.yaml"
+tests:
+  - test_id: 933100
+    desc: "Shellshock via User-Agent"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test"
+            headers:
+              User-Agent: "() { :; }; /bin/sh -c 'echo vulnerable'"
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933101
+    desc: "Shellshock via Cookie"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test"
+            headers:
+              Cookie: "session=() { :; }; /bin/sh -c 'echo vulnerable'"
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933102
+    desc: "PHP Object Injection (O:)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?data=O:8:%22stdClass%22:1:{s:4:%22test%22;s:4:%22test%22;}"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933103
+    desc: "PHP wrapper php://filter base64"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?file=php://filter/convert.base64-encode/resource=index.php"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933104
+    desc: "PHP wrapper php://input"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/test?file=php://input"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "<?php system('id'); ?>"
+          output:
+            log_contains: "id"
+  - test_id: 933105
+    desc: "PHP wrapper expect://"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?file=expect://id"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933106
+    desc: "PHP wrapper zip://"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?file=zip://archive.zip%23dir/file.txt"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933107
+    desc: "PHP eval() injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/test"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "code=eval(base64_decode('cGhwaW5mbygpOw=='));"
+          output:
+            log_contains: "id"
+  - test_id: 933108
+    desc: "PHP assert() injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?assert=assert(phpinfo())"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933109
+    desc: "PHP preg_replace /e modifier"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?pattern=/test/e&replacement=phpinfo()"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933110
+    desc: "PHP system() injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?cmd=system('cat /etc/passwd')"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933111
+    desc: "PHP backtick execution"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/test"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "exec=`id`"
+          output:
+            log_contains: "id"
+  - test_id: 933112
+    desc: "PHP type juggling (0 == 'string')"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?username=admin&password[]=1"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933113
+    desc: "PHP mail() header injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/contact"
+            headers:
+              Host: "localhost"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "to=test@test.com%0ACc:victim@test.com"
+          output:
+            log_contains: "id"
+  - test_id: 933114
+    desc: "PHP file upload bypass (.php5)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/upload"
+            headers:
+              Host: "localhost"
+              Content-Type: "multipart/form-data; boundary=boundary"
+            data: "--boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php5\"\r\n\r\n<?php system($_GET['cmd']); ?>\r\n--boundary--"
+          output:
+            log_contains: "id"
+  - test_id: 933115
+    desc: "PHP Object Injection (a: array)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?data=a:1:{i:0;O:8:%22stdClass%22:0:{}}"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933116
+    desc: "PHP open_basedir bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?path=glob:///*"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"
+  - test_id: 933117
+    desc: "PHP disable_functions bypass via mail"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/test?cmd=putenv('LD_PRELOAD=/tmp/bypass.so');mail('a@localhost','','','','');"
+            headers:
+              Host: "localhost"
+          output:
+            log_contains: "id"

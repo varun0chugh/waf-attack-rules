@@ -1,0 +1,275 @@
+meta:
+  author: "Security Engineer"
+  description: "Protocol Attack Tests"
+  enabled: true
+  name: "921-protocol-attack.yaml"
+tests:
+  - test_id: "921100"
+    desc: "HTTP Response Splitting"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/?page=index%0d%0aSet-Cookie:%20session=hack"
+        output:
+          log_contains: "id"
+  - test_id: "921101"
+    desc: "CRLF Header Injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/?q=test%0d%0aX-Injected:%20header"
+        output:
+          log_contains: "id"
+  - test_id: "921102"
+    desc: "HTTP Request Smuggling CL.TE"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "15"
+            Transfer-Encoding: "chunked"
+          uri: "/"
+          data: "0\\r\\n\\r\\nPOST / HTTP/1.1\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "921103"
+    desc: "HTTP Request Smuggling TE.CL"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "4"
+            Transfer-Encoding: "chunked"
+          uri: "/"
+          data: "5c\\r\\nPOST / HTTP/1.1\\r\\nHost: localhost\\r\\nContent-Length: 15\\r\\n\\r\\nx\\r\\n0\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "921104"
+    desc: "Chunked encoding smuggling"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Transfer-Encoding: "chunked"
+          uri: "/"
+          data: "1\\r\\nA\\r\\n0\\r\\n\\r\\nGET /admin HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "921105"
+    desc: "H2 desync attack"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Forwarded-For: "127.0.0.1\\r\\nTransfer-Encoding: chunked"
+          uri: "/"
+          data: "0\\r\\n\\r\\nGET /admin HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "921106"
+    desc: "Header injection via newline"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Custom: "foo\\nbar"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921107"
+    desc: "Response header injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/redirect?url=http://example.com%0d%0aLocation:%20http://evil.com"
+        output:
+          log_contains: "id"
+  - test_id: "921108"
+    desc: "Cache poisoning headers"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Forwarded-Host: "evil.com"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921109"
+    desc: "Host header routing abuse"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "admin.local"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921110"
+    desc: "HTTP Request Smuggling TE.TE"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "4"
+            Transfer-Encoding:
+              - "chunked"
+              - "cow"
+          uri: "/"
+          data: "5\\r\\nhello\\r\\n0\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "921111"
+    desc: "Cache poisoning via X-Original-URL"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Original-URL: "/admin"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921112"
+    desc: "Cache poisoning via X-Rewrite-URL"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Rewrite-URL: "/admin"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921113"
+    desc: "Cache poisoning via X-Forwarded-Scheme"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Forwarded-Scheme: "http"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921114"
+    desc: "Cache poisoning via X-Host"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-Host: "evil.com"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921115"
+    desc: "Cache poisoning via Forwarded"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            Forwarded: "host=evil.com"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921116"
+    desc: "Cache poisoning via X-HTTP-Host-Override"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+            X-HTTP-Host-Override: "evil.com"
+          uri: "/"
+        output:
+          log_contains: "id"
+  - test_id: "921117"
+    desc: "Web Cache Deception"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            Host: "localhost"
+          uri: "/myaccount/profile.css"
+        output:
+          log_contains: "id"
+  - test_id: "921118"
+    desc: "HTTP Request Smuggling with unusual whitespace"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "4"
+            Transfer-Encoding: "\\x0bchunked"
+          uri: "/"
+          data: "0\\r\\n\\r\\n"
+        output:
+          log_contains: "id"
+  - test_id: "921119"
+    desc: "HTTP Request Smuggling with tab in Transfer-Encoding"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            Host: "localhost"
+            Content-Length: "4"
+            Transfer-Encoding: "\\tchunked"
+          uri: "/"
+          data: "0\\r\\n\\r\\n"
+        output:
+          log_contains: "id"

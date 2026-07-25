@@ -1,0 +1,316 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "WAF Bypass Techniques for XSS"
+  enabled: true
+  name: "941-xss-bypass-techniques"
+tests:
+  - test_id: 941150
+    desc: Case obfuscation
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<ScRiPt>alert(1)</sCrIpT>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941151
+    desc: Null bytes between tags
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<scr%00ipt>alert(1)</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941152
+    desc: Tab/newline in tags
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<scri%09pt>alert(1)</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941153
+    desc: HTML comment splitting
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<!--><script>alert(1)</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941154
+    desc: Double open angle
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<<%script>alert(1)</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941155
+    desc: JavaScript with newlines
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<a href="java%0Ascript:alert(1)">X</a>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941156
+    desc: Overlong UTF-8 encoding
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=%c0%bcscript%c0%bealert(1)%c0%bc/script%c0%be
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941157
+    desc: Mixed encoding
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=%26%23x3C%3Bscript%26%23x3E%3Balert(1)%26%23x3C%3B%2Fscript%26%23x3E%3B
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941158
+    desc: JSFuck-style encoding
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<script>[][(![]+[])[+[]]+([![]]+[][[]])[+!+[]+[+[]]]+(![]+[])[!+[]+!+[]]+(![]+[])[!+[]+!+[]]](()[+[]]+(+[![]]+[])[+[]]+(+[![]]+[])[!+[]+!+[]])</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941159
+    desc: Prototype pollution via XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: POST
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            Content-Type: application/json
+          data: '{"__proto__":{"cookie":"document.cookie"}}'
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941160
+    desc: Angular template injection
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q={{constructor.constructor('alert(1)')()}}
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941161
+    desc: Vue template injection
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q={{_setupProxy.alert(1)}}
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941162
+    desc: React dangerouslySetInnerHTML
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q={"__html":"<img src=x onerror=alert(1)>"}
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941163
+    desc: Window.name XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<script>eval(name)</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941164
+    desc: PostMessage XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<script>window.postMessage("javascript:alert(1)","*")</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941165
+    desc: Service Worker XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=navigator.serviceWorker.register('data:application/javascript,alert(1)')
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941166
+    desc: XSS via Content-Type header
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            Content-Type: "text/html;<script>alert(1)</script>"
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941167
+    desc: XSS via Referer header
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            Referer: "http://example.com/<script>alert(1)</script>"
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941168
+    desc: XSS via Cookie header
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            Cookie: "sessionid=123; user=<script>alert(1)</script>"
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941169
+    desc: XSS via filename in multipart
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: POST
+          port: 80
+          uri: /upload
+          headers:
+            Host: localhost
+            Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+          data: "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"file\"; filename=\"<script>alert(1)</script>.txt\"\r\nContent-Type: text/plain\r\n\r\nhi\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--\r\n"
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941170
+    desc: User-Agent XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            User-Agent: "Mozilla/5.0 <script>alert(1)</script>"
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941171
+    desc: X-Forwarded-For XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            X-Forwarded-For: "1.2.3.4, <script>alert(1)</script>"
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941172
+    desc: SVG animateTransform XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<svg><animateTransform onbegin=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941173
+    desc: Iframe javascript URI
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<iframe src=javascript:alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941174
+    desc: Button formaction
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<form><button formaction=javascript:alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""

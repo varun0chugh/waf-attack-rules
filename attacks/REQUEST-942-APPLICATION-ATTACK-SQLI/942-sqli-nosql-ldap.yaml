@@ -1,0 +1,374 @@
+meta:
+  author: "wafprobe"
+  description: "NoSQL and LDAP Injection"
+tests:
+  - test_id: 942150
+    desc: "MongoDB injection ($gt)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"username\": {\"$gt\": \"\"}, \"password\": {\"$gt\": \"\"}}"
+          output:
+            log_contains: "id"
+  - test_id: 942151
+    desc: "MongoDB injection ($ne)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"username\": {\"$ne\": null}, \"password\": {\"$ne\": null}}"
+          output:
+            log_contains: "id"
+  - test_id: 942152
+    desc: "MongoDB injection ($regex)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"username\": {\"$regex\": \"^admin\"}, \"password\": {\"$regex\": \".*\"}}"
+          output:
+            log_contains: "id"
+  - test_id: 942153
+    desc: "MongoDB injection ($where)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"$where\": \"this.password == 'admin'\"}"
+          output:
+            log_contains: "id"
+  - test_id: 942154
+    desc: "MongoDB JavaScript injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"username\": \"admin\", \"$where\": \"this.password.match(/^[a-z].*/)\"}"
+          output:
+            log_contains: "id"
+  - test_id: 942155
+    desc: "CouchDB injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/_all_docs?startkey=\"a\"&endkey=\"z\""
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942156
+    desc: "LDAP injection (*)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?user=*&pass=*"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942157
+    desc: "LDAP injection (&)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?user=admin)(&)&pass=123"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942158
+    desc: "LDAP injection (|)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?user=admin)(|(objectclass=*))&pass=123"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942159
+    desc: "LDAP blind injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?user=admin)(description=a*)&pass=123"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942160
+    desc: "GraphQL injection (query introspection)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/graphql"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"query\": \"{ __schema { types { name } } }\"}"
+          output:
+            log_contains: "id"
+  - test_id: 942161
+    desc: "GraphQL injection (nested queries)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/graphql"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"query\": \"{ user(id: 1) { friends { friends { friends { id } } } } }\"}"
+          output:
+            log_contains: "id"
+  - test_id: 942162
+    desc: "XPath injection (' or '1'='1)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?q=' or '1'='1"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942163
+    desc: "XPath injection (count)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?q=1] or count(parent::*[position()=1])=0 or [a='"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942164
+    desc: "XPath injection (string-length)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?q=1] or string-length(name(.))=1 or [a='"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942165
+    desc: "ORM injection (Hibernate HQL)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?q=user.password"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942166
+    desc: "ORM injection (Django ORM)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?user__password__startswith=a"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942167
+    desc: "MongoDB blind injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"username\": \"admin\", \"password\": {\"$regex\": \"^a\"}}"
+          output:
+            log_contains: "id"
+  - test_id: 942168
+    desc: "MongoDB time-based"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/users"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"$where\": \"sleep(5000)\"}"
+          output:
+            log_contains: "id"
+  - test_id: 942169
+    desc: "LDAP injection attributes"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?user=*)(uid=*))(|(uid=*"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942170
+    desc: "LDAP injection exact match"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/login?user=admin)(userPassword=a*)&pass=123"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942171
+    desc: "GraphQL mutation injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/graphql"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"query\": \"mutation { updateProfile(input: { id: 1, role: \\\"admin\\\" }) { id } }\"}"
+          output:
+            log_contains: "id"
+  - test_id: 942172
+    desc: "XPath injection XML Entity"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?q=concat('a','b')"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942173
+    desc: "XPath boolean injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?q=' and 1=1 and 'a'='a"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942174
+    desc: "ORM blind injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/search?q=1' OR (SELECT length(password) FROM users WHERE username='admin')>1 OR '1'='"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"

