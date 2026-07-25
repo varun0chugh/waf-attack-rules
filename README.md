@@ -1,11 +1,11 @@
 # 🛡️ WAFProbe — The World's Most Comprehensive WAF Testing Suite
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/Attack_Tests-543-red)]()
+[![Tests](https://img.shields.io/badge/Attack_Tests-518-red)]()
 [![Categories](https://img.shields.io/badge/Categories-20-blue)]()
 [![Format](https://img.shields.io/badge/Format-OWASP_FTW_YAML-green)]()
 
-**WAFProbe** is an open-source WAF (Web Application Firewall) efficacy testing tool with **543 unique attack test cases** across **20 attack categories**. It goes beyond OWASP CRS and Microsoft Azure DRS by covering modern attack vectors like Log4Shell, SSTI, Prototype Pollution, GraphQL attacks, JWT bypasses, and more.
+**WAFProbe** is an open-source WAF (Web Application Firewall) efficacy testing tool with **518 unique attack test cases** across **20 attack categories**. It goes beyond OWASP CRS and Microsoft Azure DRS by covering modern attack vectors like Log4Shell, SSTI, Prototype Pollution, GraphQL attacks, JWT bypasses, and more.
 
 > ⚠️ **Disclaimer**: These payloads are for **authorized security testing only**. Only scan systems you own or have explicit permission to test.
 
@@ -114,7 +114,7 @@ wafprobe/
 | Scanner Detection | ✅ Standard | ✅ Standard | **✅ 30 scanner signatures** |
 | Open Redirect | ❌ Limited | ❌ None | **✅ 20 bypass techniques** |
 | Session Attacks | ✅ Basic | ✅ Basic | **✅ Cookie tossing, donation, cross-subdomain** |
-| Total Tests | ~200 | ~150 | **543** |
+| Total Tests | ~200 | ~150 | **518** |
 
 ---
 
